@@ -1,0 +1,67 @@
+CUINT NORTH = 0;
+CUINT EAST = 1;
+CUINT SOUTH = 2;
+CUINT WEST = 3;
+
+UINT dir = NORTH;
+
+FUNCTION left_hand_search() {
+    WHILE (TRUE) DO {
+        BOOLEAN moved = FALSE;
+        // Try to turn left and move
+        dir = (dir + 3) % 4; // Turn left
+        IF (try_move(dir)) {
+            moved = TRUE;
+        } ELSE {
+            // If can't move left, try to move forward
+            dir = (dir + 1) % 4; // Adjust direction
+            IF (try_move(dir)) {
+                moved = TRUE;
+            } ELSE {
+                // If can't move right, try to turn right and move
+                dir = (dir + 1) % 4;
+                IF (try_move(dir)) {
+                    moved = TRUE;
+                } ELSE {
+                    // If can't move backward, maze is unsolvable
+                    BREAK;
+                }
+            }
+        }
+        IF (moved) {
+            // Check if at exit
+            IF (at_exit()) {
+                // Exit found
+                BREAK;
+            }
+        } ELSE {
+            // No moves possible, maze is unsolvable
+            BREAK;
+        }
+    }
+}
+
+BOOLEAN try_move(UINT direction) {
+    IF (direction == NORTH) {
+        RETURN FORW;
+    } ELSE IF (direction == EAST) {
+        RETURN RIGHT;
+    } ELSE IF (direction == SOUTH) {
+        RETURN BACK;
+    } ELSE IF (direction == WEST) {
+        RETURN LEFT;
+    } ELSE {
+        RETURN FALSE;
+    }
+}
+
+BOOLEAN at_exit() {
+    RETURN is_exit();
+}
+
+BOOLEAN is_exit() {
+    // Check if robot is at exit position
+    RETURN CHECK_EXIT;
+}
+
+left_hand_search();
