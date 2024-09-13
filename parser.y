@@ -14,8 +14,9 @@ extern ASTNode *ast_root;
 
 %}
 
+%skeleton "lalr1.cc"
 %define api.namespace {Parser}
-%define parser_class_name {Parser}
+%define api.parser.class {Parser}
 
 %code requires {
     #include "ast.h"
@@ -48,12 +49,17 @@ extern ASTNode *ast_root;
 %left MULTIPLY DIVIDE MODULO
 %right NOT
 
-%type <node> program statement variable_declaration constant_declaration array_declaration array_extension assignment increment decrement loop conditional function_declaration function_call robot_operation group_of_statements expression arithmetic_expression logical_expression comparison array_access arithmetic_expression_list return_variables parameters variables expressions movement_operator sensor_operator
+%type <node> program statement variable_declaration constant_declaration array_declaration array_extension assignment increment decrement loop conditional function_declaration function_call robot_operation group_of_statements statements expression arithmetic_expression logical_expression comparison array_access movement_operator sensor_operator
+
+%type <node_list> arithmetic_expression_list logical_expression_list arithmetic_expression_matrix logical_expression_matrix return_variables parameters variables expressions
 
 %%
 
 program:
     /* empty */
+    {
+        $$ = nullptr;  // Set the program to null if there's no statement
+    }
     | program statement
         {
             if ($1) {
