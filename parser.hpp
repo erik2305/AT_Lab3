@@ -45,7 +45,7 @@
 #ifndef YY_YY_PARSER_HPP_INCLUDED
 # define YY_YY_PARSER_HPP_INCLUDED
 // "%code requires" blocks.
-#line 22 "parser.y"
+#line 21 "parser.y"
 
     #include "ast.h"
 
@@ -183,7 +183,7 @@
 # define YYDEBUG 0
 #endif
 
-#line 19 "parser.y"
+#line 18 "parser.y"
 namespace Parser {
 #line 189 "parser.hpp"
 
@@ -203,7 +203,7 @@ namespace Parser {
     /// Symbol semantic values.
     union value_type
     {
-#line 26 "parser.y"
+#line 25 "parser.y"
 
     int int_val;
     bool bool_val;
@@ -894,7 +894,7 @@ namespace Parser {
   };
 
 
-#line 19 "parser.y"
+#line 18 "parser.y"
 } // Parser
 #line 900 "parser.hpp"
 

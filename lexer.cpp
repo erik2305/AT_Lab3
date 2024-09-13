@@ -550,7 +550,7 @@ int yy_flex_debug = 0;
 char *yytext;
 #line 1 "lexer.l"
 #line 2 "lexer.l"
-#include "parser.hh"
+#include "parser.tab.hh"
 #include <iostream>
 #include <cstdlib>
 #include <cstring>
@@ -2141,4 +2141,3 @@ void yyfree (void * ptr )
 int yyFlexLexer::yywrap() {
     return 1;
 }
-
