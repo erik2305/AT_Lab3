@@ -1,5 +1,5 @@
 %{
-#include "parser.tab.hh"
+#include "parser.hpp"
 #include <iostream>
 #include <cstdlib>
 #include <cstring>

@@ -1,3 +1,4 @@
+%skeleton "lalr1.cc"
 %{
 #include <iostream>
 #include <cstdlib>
@@ -14,8 +15,9 @@ extern ASTNode *ast_root;
 
 %}
 
+
 %define api.namespace {Parser}
-%define parser_class_name {Parser}
+%define api.parser.class {Parser}
 
 %code requires {
     #include "ast.h"
@@ -42,18 +44,28 @@ extern ASTNode *ast_root;
 %token WHILE DO IF ELSE FUNCTION
 %token FORW BACK RIGHT_OP LEFT_OP GETF GETB GETR GETL PUSHF PUSHB PUSHR PUSHL UNDO
 
+%nonassoc ASSIGN
+%nonassoc LPAREN
+%nonassoc COMMA
+%nonassoc RPAREN
+
 %left OR
 %left GT LT
 %left PLUS MINUS
 %left MULTIPLY DIVIDE MODULO
 %right NOT
 
-%type <node> program statement variable_declaration constant_declaration array_declaration array_extension assignment increment decrement loop conditional function_declaration function_call robot_operation group_of_statements expression arithmetic_expression logical_expression comparison array_access arithmetic_expression_list return_variables parameters variables expressions movement_operator sensor_operator
+
+
+%type <node> program statement variable_declaration constant_declaration array_declaration array_extension assignment increment decrement loop conditional function_declaration function_call robot_operation group_of_statements expression arithmetic_expression logical_expression comparison array_access movement_operator sensor_operator
+
+%type <node_list> statements logical_expression_list logical_expression_matrix arithmetic_expression_list arithmetic_expression_matrix return_variables parameters variables expressions
 
 %%
 
 program:
     /* empty */
+    { $$ = nullptr; }
     | program statement
         {
             if ($1) {
@@ -196,13 +208,9 @@ function_call:
 
 robot_operation:
     movement_operator SEMICOLON
-        {
-            $$ = new RobotOperationNode($1);
-        }
+        { $$ = new RobotOperationNode($1); }
     | sensor_operator SEMICOLON
-        {
-            $$ = new RobotOperationNode($1);
-        }
+        { $$ = new RobotOperationNode($1); }
     ;
 
 group_of_statements:
