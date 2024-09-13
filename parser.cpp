@@ -47,13 +47,12 @@
 
 using namespace std;
 
-extern int yylex();
+extern int yylex(Parser::semantic_type *yylval);
 void yyerror(const char *s);
 
 extern ASTNode *ast_root;
 
-
-#line 57 "parser.cpp"
+#line 56 "parser.cpp"
 
 
 #include "parser.hpp"
@@ -132,7 +131,7 @@ extern ASTNode *ast_root;
 
 #line 18 "parser.y"
 namespace Parser {
-#line 136 "parser.cpp"
+#line 135 "parser.cpp"
 
   /// Build a parser object.
   Parser::Parser ()
@@ -586,15 +585,13 @@ namespace Parser {
           switch (yyn)
             {
   case 2: // program: %empty
-#line 60 "parser.y"
-    {
-        (yylhs.value.node) = nullptr;  // Set the program to null if there's no statement
-    }
-#line 594 "parser.cpp"
+#line 65 "parser.y"
+    { (yylhs.value.node) = nullptr; }
+#line 591 "parser.cpp"
     break;
 
   case 3: // program: program statement
-#line 64 "parser.y"
+#line 67 "parser.y"
         {
             if ((yystack_[1].value.node)) {
                 (yystack_[1].value.node)->addSibling((yystack_[0].value.node));
@@ -603,682 +600,678 @@ namespace Parser {
                 (yylhs.value.node) = (yystack_[0].value.node);
             }
         }
-#line 607 "parser.cpp"
+#line 604 "parser.cpp"
     break;
 
   case 4: // statement: variable_declaration
-#line 75 "parser.y"
+#line 78 "parser.y"
     { (yylhs.value.node) = (yystack_[0].value.node); }
-#line 613 "parser.cpp"
+#line 610 "parser.cpp"
     break;
 
   case 5: // statement: constant_declaration
-#line 76 "parser.y"
+#line 79 "parser.y"
       { (yylhs.value.node) = (yystack_[0].value.node); }
-#line 619 "parser.cpp"
+#line 616 "parser.cpp"
     break;
 
   case 6: // statement: array_declaration
-#line 77 "parser.y"
+#line 80 "parser.y"
       { (yylhs.value.node) = (yystack_[0].value.node); }
-#line 625 "parser.cpp"
+#line 622 "parser.cpp"
     break;
 
   case 7: // statement: array_extension
-#line 78 "parser.y"
+#line 81 "parser.y"
       { (yylhs.value.node) = (yystack_[0].value.node); }
-#line 631 "parser.cpp"
+#line 628 "parser.cpp"
     break;
 
   case 8: // statement: assignment
-#line 79 "parser.y"
+#line 82 "parser.y"
       { (yylhs.value.node) = (yystack_[0].value.node); }
-#line 637 "parser.cpp"
+#line 634 "parser.cpp"
     break;
 
   case 9: // statement: increment
-#line 80 "parser.y"
+#line 83 "parser.y"
       { (yylhs.value.node) = (yystack_[0].value.node); }
-#line 643 "parser.cpp"
+#line 640 "parser.cpp"
     break;
 
   case 10: // statement: decrement
-#line 81 "parser.y"
+#line 84 "parser.y"
       { (yylhs.value.node) = (yystack_[0].value.node); }
-#line 649 "parser.cpp"
+#line 646 "parser.cpp"
     break;
 
   case 11: // statement: loop
-#line 82 "parser.y"
+#line 85 "parser.y"
       { (yylhs.value.node) = (yystack_[0].value.node); }
-#line 655 "parser.cpp"
+#line 652 "parser.cpp"
     break;
 
   case 12: // statement: conditional
-#line 83 "parser.y"
+#line 86 "parser.y"
       { (yylhs.value.node) = (yystack_[0].value.node); }
-#line 661 "parser.cpp"
+#line 658 "parser.cpp"
     break;
 
   case 13: // statement: function_declaration
-#line 84 "parser.y"
+#line 87 "parser.y"
       { (yylhs.value.node) = (yystack_[0].value.node); }
-#line 667 "parser.cpp"
+#line 664 "parser.cpp"
     break;
 
   case 14: // statement: function_call
-#line 85 "parser.y"
+#line 88 "parser.y"
       { (yylhs.value.node) = (yystack_[0].value.node); }
-#line 673 "parser.cpp"
+#line 670 "parser.cpp"
     break;
 
   case 15: // statement: robot_operation
-#line 86 "parser.y"
+#line 89 "parser.y"
       { (yylhs.value.node) = (yystack_[0].value.node); }
-#line 679 "parser.cpp"
+#line 676 "parser.cpp"
     break;
 
   case 16: // statement: group_of_statements
-#line 87 "parser.y"
+#line 90 "parser.y"
       { (yylhs.value.node) = (yystack_[0].value.node); }
-#line 685 "parser.cpp"
+#line 682 "parser.cpp"
     break;
 
   case 17: // variable_declaration: UINT IDENTIFIER ASSIGN arithmetic_expression SEMICOLON
-#line 92 "parser.y"
+#line 95 "parser.y"
         {
-            (yylhs.value.node) = new VarDeclarationNode((yystack_[3].value.id), VarType::UINT, (yystack_[1].value.node));
+            (yylhs.value.node) = new VarDeclarationNode(std::string((yystack_[3].value.id)), VarType::UINT, (yystack_[1].value.node));
         }
-#line 693 "parser.cpp"
+#line 690 "parser.cpp"
     break;
 
   case 18: // variable_declaration: BOOLEAN IDENTIFIER ASSIGN logical_expression SEMICOLON
-#line 96 "parser.y"
+#line 99 "parser.y"
         {
-            (yylhs.value.node) = new VarDeclarationNode((yystack_[3].value.id), VarType::BOOLEAN, (yystack_[1].value.node));
+            (yylhs.value.node) = new VarDeclarationNode(std::string((yystack_[3].value.id)), VarType::BOOLEAN, (yystack_[1].value.node));
         }
-#line 701 "parser.cpp"
+#line 698 "parser.cpp"
     break;
 
   case 19: // constant_declaration: CUINT IDENTIFIER ASSIGN arithmetic_expression SEMICOLON
-#line 103 "parser.y"
+#line 106 "parser.y"
         {
-            (yylhs.value.node) = new ConstDeclarationNode((yystack_[3].value.id), VarType::UINT, (yystack_[1].value.node));
+            (yylhs.value.node) = new ConstDeclarationNode(std::string((yystack_[3].value.id)), VarType::UINT, (yystack_[1].value.node));
         }
-#line 709 "parser.cpp"
+#line 706 "parser.cpp"
     break;
 
   case 20: // constant_declaration: CBOOLEAN IDENTIFIER ASSIGN logical_expression SEMICOLON
-#line 107 "parser.y"
+#line 110 "parser.y"
         {
-            (yylhs.value.node) = new ConstDeclarationNode((yystack_[3].value.id), VarType::BOOLEAN, (yystack_[1].value.node));
+            (yylhs.value.node) = new ConstDeclarationNode(std::string((yystack_[3].value.id)), VarType::BOOLEAN, (yystack_[1].value.node));
         }
-#line 717 "parser.cpp"
+#line 714 "parser.cpp"
     break;
 
   case 21: // array_declaration: ARRAY1DBOOL IDENTIFIER ASSIGN LBRACKET logical_expression_list RBRACKET SEMICOLON
-#line 114 "parser.y"
+#line 117 "parser.y"
         {
-            (yylhs.value.node) = new ArrayDeclarationNode((yystack_[5].value.id), VarType::BOOLEAN, 1, (yystack_[2].value.node_list));
+            (yylhs.value.node) = new ArrayDeclarationNode(std::string((yystack_[5].value.id)), VarType::BOOLEAN, 1, (yystack_[2].value.node_list));
         }
-#line 725 "parser.cpp"
+#line 722 "parser.cpp"
     break;
 
   case 22: // array_declaration: ARRAY2DBOOL IDENTIFIER ASSIGN LBRACKET logical_expression_matrix RBRACKET SEMICOLON
-#line 118 "parser.y"
+#line 121 "parser.y"
         {
-            (yylhs.value.node) = new ArrayDeclarationNode((yystack_[5].value.id), VarType::BOOLEAN, 2, (yystack_[2].value.node_list));
+            (yylhs.value.node) = new ArrayDeclarationNode(std::string((yystack_[5].value.id)), VarType::BOOLEAN, 2, (yystack_[2].value.node_list));
         }
-#line 733 "parser.cpp"
+#line 730 "parser.cpp"
     break;
 
   case 23: // array_declaration: ARRAY1DUINT IDENTIFIER ASSIGN LBRACKET arithmetic_expression_list RBRACKET SEMICOLON
-#line 122 "parser.y"
+#line 125 "parser.y"
         {
-            (yylhs.value.node) = new ArrayDeclarationNode((yystack_[5].value.id), VarType::UINT, 1, (yystack_[2].value.node_list));
+            (yylhs.value.node) = new ArrayDeclarationNode(std::string((yystack_[5].value.id)), VarType::UINT, 1, (yystack_[2].value.node_list));
         }
-#line 741 "parser.cpp"
+#line 738 "parser.cpp"
     break;
 
   case 24: // array_declaration: ARRAY2DUINT IDENTIFIER ASSIGN LBRACKET arithmetic_expression_matrix RBRACKET SEMICOLON
-#line 126 "parser.y"
+#line 129 "parser.y"
         {
-            (yylhs.value.node) = new ArrayDeclarationNode((yystack_[5].value.id), VarType::UINT, 2, (yystack_[2].value.node_list));
+            (yylhs.value.node) = new ArrayDeclarationNode(std::string((yystack_[5].value.id)), VarType::UINT, 2, (yystack_[2].value.node_list));
         }
-#line 749 "parser.cpp"
+#line 746 "parser.cpp"
     break;
 
   case 25: // array_extension: EXTEND1 IDENTIFIER arithmetic_expression SEMICOLON
-#line 133 "parser.y"
+#line 136 "parser.y"
         {
-            (yylhs.value.node) = new ArrayExtensionNode((yystack_[2].value.id), 1, (yystack_[1].value.node));
+            (yylhs.value.node) = new ArrayExtensionNode(std::string((yystack_[2].value.id)), 1, (yystack_[1].value.node));
         }
-#line 757 "parser.cpp"
+#line 754 "parser.cpp"
     break;
 
   case 26: // array_extension: EXTEND2 IDENTIFIER arithmetic_expression arithmetic_expression SEMICOLON
-#line 137 "parser.y"
+#line 140 "parser.y"
         {
-            (yylhs.value.node) = new ArrayExtensionNode((yystack_[3].value.id), 2, (yystack_[2].value.node), (yystack_[1].value.node));
+            (yylhs.value.node) = new ArrayExtensionNode(std::string((yystack_[3].value.id)), 2, (yystack_[2].value.node), (yystack_[1].value.node));
         }
-#line 765 "parser.cpp"
+#line 762 "parser.cpp"
     break;
 
   case 27: // assignment: IDENTIFIER ASSIGN expression SEMICOLON
-#line 144 "parser.y"
+#line 147 "parser.y"
         {
-            (yylhs.value.node) = new AssignmentNode((yystack_[3].value.id), (yystack_[1].value.node));
+            (yylhs.value.node) = new AssignmentNode(std::string((yystack_[3].value.id)), (yystack_[1].value.node));
         }
-#line 773 "parser.cpp"
+#line 770 "parser.cpp"
     break;
 
   case 28: // assignment: array_access ASSIGN expression SEMICOLON
-#line 148 "parser.y"
+#line 151 "parser.y"
         {
             (yylhs.value.node) = new ArrayAssignmentNode((yystack_[3].value.node), (yystack_[1].value.node));
         }
-#line 781 "parser.cpp"
+#line 778 "parser.cpp"
     break;
 
   case 29: // increment: INC IDENTIFIER SEMICOLON
-#line 155 "parser.y"
+#line 158 "parser.y"
         {
-            (yylhs.value.node) = new IncDecNode((yystack_[1].value.id), 1);
+            (yylhs.value.node) = new IncDecNode(std::string((yystack_[1].value.id)), 1);
         }
-#line 789 "parser.cpp"
+#line 786 "parser.cpp"
     break;
 
   case 30: // decrement: DEC IDENTIFIER SEMICOLON
-#line 162 "parser.y"
+#line 165 "parser.y"
         {
-            (yylhs.value.node) = new IncDecNode((yystack_[1].value.id), -1);
+            (yylhs.value.node) = new IncDecNode(std::string((yystack_[1].value.id)), -1);
         }
-#line 797 "parser.cpp"
+#line 794 "parser.cpp"
     break;
 
   case 31: // loop: WHILE LPAREN logical_expression RPAREN DO group_of_statements
-#line 169 "parser.y"
+#line 172 "parser.y"
         {
             (yylhs.value.node) = new WhileNode((yystack_[3].value.node), (yystack_[0].value.node));
         }
-#line 805 "parser.cpp"
+#line 802 "parser.cpp"
     break;
 
   case 32: // conditional: IF LPAREN logical_expression RPAREN group_of_statements
-#line 176 "parser.y"
+#line 179 "parser.y"
         {
             (yylhs.value.node) = new IfNode((yystack_[2].value.node), (yystack_[0].value.node));
         }
-#line 813 "parser.cpp"
+#line 810 "parser.cpp"
     break;
 
   case 33: // conditional: IF LPAREN logical_expression RPAREN group_of_statements ELSE group_of_statements
-#line 180 "parser.y"
+#line 183 "parser.y"
         {
             (yylhs.value.node) = new IfNode((yystack_[4].value.node), (yystack_[2].value.node), (yystack_[0].value.node));
         }
-#line 821 "parser.cpp"
+#line 818 "parser.cpp"
     break;
 
   case 34: // function_declaration: return_variables FUNCTION IDENTIFIER LPAREN parameters RPAREN group_of_statements
-#line 187 "parser.y"
+#line 190 "parser.y"
         {
-            (yylhs.value.node) = new FunctionDeclarationNode((yystack_[4].value.id), (yystack_[6].value.node_list), (yystack_[2].value.node_list), (yystack_[0].value.node));
+            (yylhs.value.node) = new FunctionDeclarationNode(std::string((yystack_[4].value.id)), (yystack_[6].value.node_list), (yystack_[2].value.node_list), (yystack_[0].value.node));
         }
-#line 829 "parser.cpp"
+#line 826 "parser.cpp"
     break;
 
   case 35: // function_call: variables ASSIGN IDENTIFIER LPAREN expressions RPAREN SEMICOLON
-#line 194 "parser.y"
+#line 197 "parser.y"
         {
-            (yylhs.value.node) = new FunctionCallNode((yystack_[4].value.id), (yystack_[2].value.node_list), (yystack_[6].value.node_list));
+            (yylhs.value.node) = new FunctionCallNode(std::string((yystack_[4].value.id)), (yystack_[2].value.node_list), (yystack_[6].value.node_list));
         }
-#line 837 "parser.cpp"
+#line 834 "parser.cpp"
     break;
 
   case 36: // function_call: IDENTIFIER LPAREN expressions RPAREN SEMICOLON
-#line 198 "parser.y"
+#line 201 "parser.y"
         {
-            (yylhs.value.node) = new FunctionCallNode((yystack_[4].value.id), (yystack_[2].value.node_list));
+            (yylhs.value.node) = new FunctionCallNode(std::string((yystack_[4].value.id)), (yystack_[2].value.node_list));
         }
-#line 845 "parser.cpp"
+#line 842 "parser.cpp"
     break;
 
   case 37: // robot_operation: movement_operator SEMICOLON
-#line 205 "parser.y"
-        {
-            (yylhs.value.node) = new RobotOperationNode((yystack_[1].value.node));
-        }
-#line 853 "parser.cpp"
+#line 208 "parser.y"
+        { (yylhs.value.node) = new RobotOperationNode((yystack_[1].value.node)); }
+#line 848 "parser.cpp"
     break;
 
   case 38: // robot_operation: sensor_operator SEMICOLON
-#line 209 "parser.y"
-        {
-            (yylhs.value.node) = new RobotOperationNode((yystack_[1].value.node));
-        }
-#line 861 "parser.cpp"
+#line 210 "parser.y"
+        { (yylhs.value.node) = new RobotOperationNode((yystack_[1].value.node)); }
+#line 854 "parser.cpp"
     break;
 
   case 39: // group_of_statements: LBRACE statements RBRACE
-#line 216 "parser.y"
+#line 215 "parser.y"
         {
-            (yylhs.value.node) = (yystack_[1].value.node);
+            (yylhs.value.node) = (yystack_[1].value.node_list);
         }
-#line 869 "parser.cpp"
+#line 862 "parser.cpp"
     break;
 
   case 40: // statements: %empty
-#line 223 "parser.y"
+#line 222 "parser.y"
         {
-            (yylhs.value.node) = nullptr;
+            (yylhs.value.node_list) = nullptr;
         }
-#line 877 "parser.cpp"
+#line 870 "parser.cpp"
     break;
 
   case 41: // statements: statements statement
-#line 227 "parser.y"
+#line 226 "parser.y"
         {
-            if ((yystack_[1].value.node)) {
-                (yystack_[1].value.node)->addSibling((yystack_[0].value.node));
-                (yylhs.value.node) = (yystack_[1].value.node);
+            if ((yystack_[1].value.node_list)) {
+                (yystack_[1].value.node_list)->addSibling((yystack_[0].value.node));
+                (yylhs.value.node_list) = (yystack_[1].value.node_list);
             } else {
-                (yylhs.value.node) = (yystack_[0].value.node);
+                (yylhs.value.node_list) = (yystack_[0].value.node);
             }
         }
-#line 890 "parser.cpp"
+#line 883 "parser.cpp"
     break;
 
   case 42: // expression: arithmetic_expression
-#line 239 "parser.y"
+#line 238 "parser.y"
         { (yylhs.value.node) = (yystack_[0].value.node); }
-#line 896 "parser.cpp"
+#line 889 "parser.cpp"
     break;
 
   case 43: // expression: logical_expression
-#line 241 "parser.y"
+#line 240 "parser.y"
         { (yylhs.value.node) = (yystack_[0].value.node); }
-#line 902 "parser.cpp"
+#line 895 "parser.cpp"
     break;
 
   case 44: // arithmetic_expression: arithmetic_expression PLUS arithmetic_expression
-#line 246 "parser.y"
+#line 245 "parser.y"
         {
             (yylhs.value.node) = new ArithmeticOpNode('+', (yystack_[2].value.node), (yystack_[0].value.node));
         }
-#line 910 "parser.cpp"
+#line 903 "parser.cpp"
     break;
 
   case 45: // arithmetic_expression: arithmetic_expression MINUS arithmetic_expression
-#line 250 "parser.y"
+#line 249 "parser.y"
         {
             (yylhs.value.node) = new ArithmeticOpNode('-', (yystack_[2].value.node), (yystack_[0].value.node));
         }
-#line 918 "parser.cpp"
+#line 911 "parser.cpp"
     break;
 
   case 46: // arithmetic_expression: arithmetic_expression MULTIPLY arithmetic_expression
-#line 254 "parser.y"
+#line 253 "parser.y"
         {
             (yylhs.value.node) = new ArithmeticOpNode('*', (yystack_[2].value.node), (yystack_[0].value.node));
         }
-#line 926 "parser.cpp"
+#line 919 "parser.cpp"
     break;
 
   case 47: // arithmetic_expression: arithmetic_expression DIVIDE arithmetic_expression
-#line 258 "parser.y"
+#line 257 "parser.y"
         {
             (yylhs.value.node) = new ArithmeticOpNode('/', (yystack_[2].value.node), (yystack_[0].value.node));
         }
-#line 934 "parser.cpp"
+#line 927 "parser.cpp"
     break;
 
   case 48: // arithmetic_expression: arithmetic_expression MODULO arithmetic_expression
-#line 262 "parser.y"
+#line 261 "parser.y"
         {
             (yylhs.value.node) = new ArithmeticOpNode('%', (yystack_[2].value.node), (yystack_[0].value.node));
         }
-#line 942 "parser.cpp"
+#line 935 "parser.cpp"
     break;
 
   case 49: // arithmetic_expression: LPAREN arithmetic_expression RPAREN
-#line 266 "parser.y"
+#line 265 "parser.y"
         {
             (yylhs.value.node) = (yystack_[1].value.node);
         }
-#line 950 "parser.cpp"
+#line 943 "parser.cpp"
     break;
 
   case 50: // arithmetic_expression: UNSIGNED_INT
-#line 270 "parser.y"
+#line 269 "parser.y"
         {
             (yylhs.value.node) = new IntNode((yystack_[0].value.int_val));
         }
-#line 958 "parser.cpp"
+#line 951 "parser.cpp"
     break;
 
   case 51: // arithmetic_expression: IDENTIFIER
-#line 274 "parser.y"
+#line 273 "parser.y"
         {
-            (yylhs.value.node) = new VariableNode((yystack_[0].value.id));
+            (yylhs.value.node) = new VariableNode(std::string((yystack_[0].value.id)));
         }
-#line 966 "parser.cpp"
+#line 959 "parser.cpp"
     break;
 
   case 52: // arithmetic_expression: function_call
-#line 278 "parser.y"
+#line 277 "parser.y"
         {
             (yylhs.value.node) = (yystack_[0].value.node);
         }
-#line 974 "parser.cpp"
+#line 967 "parser.cpp"
     break;
 
   case 53: // arithmetic_expression: array_access
-#line 282 "parser.y"
+#line 281 "parser.y"
         {
             (yylhs.value.node) = (yystack_[0].value.node);
         }
-#line 982 "parser.cpp"
+#line 975 "parser.cpp"
     break;
 
   case 54: // logical_expression: logical_expression OR logical_expression
-#line 289 "parser.y"
+#line 288 "parser.y"
         {
             (yylhs.value.node) = new LogicalOpNode('O', (yystack_[2].value.node), (yystack_[0].value.node));
         }
-#line 990 "parser.cpp"
+#line 983 "parser.cpp"
     break;
 
   case 55: // logical_expression: NOT logical_expression
-#line 293 "parser.y"
+#line 292 "parser.y"
         {
             (yylhs.value.node) = new LogicalOpNode('N', (yystack_[0].value.node));
         }
-#line 998 "parser.cpp"
+#line 991 "parser.cpp"
     break;
 
   case 56: // logical_expression: comparison
-#line 297 "parser.y"
+#line 296 "parser.y"
         {
             (yylhs.value.node) = (yystack_[0].value.node);
         }
-#line 1006 "parser.cpp"
+#line 999 "parser.cpp"
     break;
 
   case 57: // logical_expression: BOOL_CONST
-#line 301 "parser.y"
+#line 300 "parser.y"
         {
             (yylhs.value.node) = new BoolNode((yystack_[0].value.bool_val));
         }
-#line 1014 "parser.cpp"
+#line 1007 "parser.cpp"
     break;
 
   case 58: // logical_expression: IDENTIFIER
-#line 305 "parser.y"
+#line 304 "parser.y"
         {
-            (yylhs.value.node) = new VariableNode((yystack_[0].value.id));
+            (yylhs.value.node) = new VariableNode(std::string((yystack_[0].value.id)));
         }
-#line 1022 "parser.cpp"
+#line 1015 "parser.cpp"
     break;
 
   case 59: // logical_expression: function_call
-#line 309 "parser.y"
+#line 308 "parser.y"
         {
             (yylhs.value.node) = (yystack_[0].value.node);
         }
-#line 1030 "parser.cpp"
+#line 1023 "parser.cpp"
     break;
 
   case 60: // logical_expression: array_access
-#line 313 "parser.y"
+#line 312 "parser.y"
         {
             (yylhs.value.node) = (yystack_[0].value.node);
         }
-#line 1038 "parser.cpp"
+#line 1031 "parser.cpp"
     break;
 
   case 61: // comparison: arithmetic_expression GT arithmetic_expression
-#line 320 "parser.y"
+#line 319 "parser.y"
         {
             (yylhs.value.node) = new ComparisonNode('G', (yystack_[2].value.node), (yystack_[0].value.node));
         }
-#line 1046 "parser.cpp"
+#line 1039 "parser.cpp"
     break;
 
   case 62: // comparison: arithmetic_expression LT arithmetic_expression
-#line 324 "parser.y"
+#line 323 "parser.y"
         {
             (yylhs.value.node) = new ComparisonNode('L', (yystack_[2].value.node), (yystack_[0].value.node));
         }
-#line 1054 "parser.cpp"
+#line 1047 "parser.cpp"
     break;
 
   case 63: // array_access: IDENTIFIER LPAREN arithmetic_expression_list RPAREN
-#line 331 "parser.y"
+#line 330 "parser.y"
         {
-            (yylhs.value.node) = new ArrayAccessNode((yystack_[3].value.id), (yystack_[1].value.node_list));
+            (yylhs.value.node) = new ArrayAccessNode(std::string((yystack_[3].value.id)), (yystack_[1].value.node_list));
         }
-#line 1062 "parser.cpp"
+#line 1055 "parser.cpp"
     break;
 
   case 64: // arithmetic_expression_list: arithmetic_expression
-#line 338 "parser.y"
+#line 337 "parser.y"
         {
             (yylhs.value.node_list) = new std::vector<ASTNode*>();
             (yylhs.value.node_list)->push_back((yystack_[0].value.node));
         }
-#line 1071 "parser.cpp"
+#line 1064 "parser.cpp"
     break;
 
   case 65: // arithmetic_expression_list: arithmetic_expression_list COMMA arithmetic_expression
-#line 343 "parser.y"
+#line 342 "parser.y"
         {
             (yystack_[2].value.node_list)->push_back((yystack_[0].value.node));
             (yylhs.value.node_list) = (yystack_[2].value.node_list);
         }
-#line 1080 "parser.cpp"
+#line 1073 "parser.cpp"
     break;
 
   case 66: // logical_expression_list: logical_expression
-#line 351 "parser.y"
+#line 350 "parser.y"
         {
             (yylhs.value.node_list) = new std::vector<ASTNode*>();
             (yylhs.value.node_list)->push_back((yystack_[0].value.node));
         }
-#line 1089 "parser.cpp"
+#line 1082 "parser.cpp"
     break;
 
   case 67: // logical_expression_list: logical_expression_list COMMA logical_expression
-#line 356 "parser.y"
+#line 355 "parser.y"
         {
             (yystack_[2].value.node_list)->push_back((yystack_[0].value.node));
             (yylhs.value.node_list) = (yystack_[2].value.node_list);
         }
-#line 1098 "parser.cpp"
+#line 1091 "parser.cpp"
     break;
 
   case 68: // logical_expression_matrix: logical_expression_list
-#line 364 "parser.y"
+#line 363 "parser.y"
         {
             (yylhs.value.node_list) = new std::vector<ASTNode*>();
             (yylhs.value.node_list)->push_back(new MatrixRowNode((yystack_[0].value.node_list)));
         }
-#line 1107 "parser.cpp"
+#line 1100 "parser.cpp"
     break;
 
   case 69: // logical_expression_matrix: logical_expression_matrix SEMICOLON logical_expression_list
-#line 369 "parser.y"
+#line 368 "parser.y"
         {
             (yystack_[2].value.node_list)->push_back(new MatrixRowNode((yystack_[0].value.node_list)));
             (yylhs.value.node_list) = (yystack_[2].value.node_list);
         }
-#line 1116 "parser.cpp"
+#line 1109 "parser.cpp"
     break;
 
   case 70: // arithmetic_expression_matrix: arithmetic_expression_list
-#line 377 "parser.y"
+#line 376 "parser.y"
         {
             (yylhs.value.node_list) = new std::vector<ASTNode*>();
             (yylhs.value.node_list)->push_back(new MatrixRowNode((yystack_[0].value.node_list)));
         }
-#line 1125 "parser.cpp"
+#line 1118 "parser.cpp"
     break;
 
   case 71: // arithmetic_expression_matrix: arithmetic_expression_matrix SEMICOLON arithmetic_expression_list
-#line 382 "parser.y"
+#line 381 "parser.y"
         {
             (yystack_[2].value.node_list)->push_back(new MatrixRowNode((yystack_[0].value.node_list)));
             (yylhs.value.node_list) = (yystack_[2].value.node_list);
         }
-#line 1134 "parser.cpp"
+#line 1127 "parser.cpp"
     break;
 
   case 72: // return_variables: LBRACKET variables RBRACKET
-#line 390 "parser.y"
+#line 389 "parser.y"
         { (yylhs.value.node_list) = (yystack_[1].value.node_list); }
-#line 1140 "parser.cpp"
+#line 1133 "parser.cpp"
     break;
 
   case 73: // return_variables: variables
-#line 392 "parser.y"
+#line 391 "parser.y"
         { (yylhs.value.node_list) = (yystack_[0].value.node_list); }
-#line 1146 "parser.cpp"
+#line 1139 "parser.cpp"
     break;
 
   case 74: // parameters: variables
-#line 397 "parser.y"
+#line 396 "parser.y"
         { (yylhs.value.node_list) = (yystack_[0].value.node_list); }
-#line 1152 "parser.cpp"
+#line 1145 "parser.cpp"
     break;
 
   case 75: // parameters: %empty
-#line 399 "parser.y"
+#line 398 "parser.y"
         { (yylhs.value.node_list) = new std::vector<ASTNode*>(); }
-#line 1158 "parser.cpp"
+#line 1151 "parser.cpp"
     break;
 
   case 76: // variables: IDENTIFIER
-#line 404 "parser.y"
+#line 403 "parser.y"
         {
             (yylhs.value.node_list) = new std::vector<ASTNode*>();
-            (yylhs.value.node_list)->push_back(new VariableNode((yystack_[0].value.id)));
+            (yylhs.value.node_list)->push_back(new VariableNode(std::string((yystack_[0].value.id))));
         }
-#line 1167 "parser.cpp"
+#line 1160 "parser.cpp"
     break;
 
   case 77: // variables: variables COMMA IDENTIFIER
-#line 409 "parser.y"
+#line 408 "parser.y"
         {
-            (yystack_[2].value.node_list)->push_back(new VariableNode((yystack_[0].value.id)));
+            (yystack_[2].value.node_list)->push_back(new VariableNode(std::string((yystack_[0].value.id))));
             (yylhs.value.node_list) = (yystack_[2].value.node_list);
         }
-#line 1176 "parser.cpp"
+#line 1169 "parser.cpp"
     break;
 
   case 78: // expressions: expression
-#line 417 "parser.y"
+#line 416 "parser.y"
         {
             (yylhs.value.node_list) = new std::vector<ASTNode*>();
             (yylhs.value.node_list)->push_back((yystack_[0].value.node));
         }
-#line 1185 "parser.cpp"
+#line 1178 "parser.cpp"
     break;
 
   case 79: // expressions: expressions COMMA expression
-#line 422 "parser.y"
+#line 421 "parser.y"
         {
             (yystack_[2].value.node_list)->push_back((yystack_[0].value.node));
             (yylhs.value.node_list) = (yystack_[2].value.node_list);
         }
-#line 1194 "parser.cpp"
+#line 1187 "parser.cpp"
     break;
 
   case 80: // expressions: %empty
-#line 427 "parser.y"
+#line 426 "parser.y"
         { (yylhs.value.node_list) = new std::vector<ASTNode*>(); }
-#line 1200 "parser.cpp"
+#line 1193 "parser.cpp"
     break;
 
   case 81: // movement_operator: FORW
-#line 432 "parser.y"
+#line 431 "parser.y"
         { (yylhs.value.node) = new MovementNode("FORW"); }
-#line 1206 "parser.cpp"
+#line 1199 "parser.cpp"
     break;
 
   case 82: // movement_operator: BACK
-#line 434 "parser.y"
+#line 433 "parser.y"
         { (yylhs.value.node) = new MovementNode("BACK"); }
-#line 1212 "parser.cpp"
+#line 1205 "parser.cpp"
     break;
 
   case 83: // movement_operator: RIGHT_OP
-#line 436 "parser.y"
+#line 435 "parser.y"
         { (yylhs.value.node) = new MovementNode("RIGHT"); }
-#line 1218 "parser.cpp"
+#line 1211 "parser.cpp"
     break;
 
   case 84: // movement_operator: LEFT_OP
-#line 438 "parser.y"
+#line 437 "parser.y"
         { (yylhs.value.node) = new MovementNode("LEFT"); }
-#line 1224 "parser.cpp"
+#line 1217 "parser.cpp"
     break;
 
   case 85: // sensor_operator: GETF
-#line 443 "parser.y"
+#line 442 "parser.y"
         { (yylhs.value.node) = new SensorNode("GETF"); }
-#line 1230 "parser.cpp"
+#line 1223 "parser.cpp"
     break;
 
   case 86: // sensor_operator: GETB
-#line 445 "parser.y"
+#line 444 "parser.y"
         { (yylhs.value.node) = new SensorNode("GETB"); }
-#line 1236 "parser.cpp"
+#line 1229 "parser.cpp"
     break;
 
   case 87: // sensor_operator: GETR
-#line 447 "parser.y"
+#line 446 "parser.y"
         { (yylhs.value.node) = new SensorNode("GETR"); }
-#line 1242 "parser.cpp"
+#line 1235 "parser.cpp"
     break;
 
   case 88: // sensor_operator: GETL
-#line 449 "parser.y"
+#line 448 "parser.y"
         { (yylhs.value.node) = new SensorNode("GETL"); }
-#line 1248 "parser.cpp"
+#line 1241 "parser.cpp"
     break;
 
   case 89: // sensor_operator: PUSHF
-#line 451 "parser.y"
+#line 450 "parser.y"
         { (yylhs.value.node) = new SensorNode("PUSHF"); }
-#line 1254 "parser.cpp"
+#line 1247 "parser.cpp"
     break;
 
   case 90: // sensor_operator: PUSHB
-#line 453 "parser.y"
+#line 452 "parser.y"
         { (yylhs.value.node) = new SensorNode("PUSHB"); }
-#line 1260 "parser.cpp"
+#line 1253 "parser.cpp"
     break;
 
   case 91: // sensor_operator: PUSHR
-#line 455 "parser.y"
+#line 454 "parser.y"
         { (yylhs.value.node) = new SensorNode("PUSHR"); }
-#line 1266 "parser.cpp"
+#line 1259 "parser.cpp"
     break;
 
   case 92: // sensor_operator: PUSHL
-#line 457 "parser.y"
+#line 456 "parser.y"
         { (yylhs.value.node) = new SensorNode("PUSHL"); }
-#line 1272 "parser.cpp"
+#line 1265 "parser.cpp"
     break;
 
   case 93: // sensor_operator: UNDO
-#line 459 "parser.y"
+#line 458 "parser.y"
         { (yylhs.value.node) = new SensorNode("UNDO"); }
-#line 1278 "parser.cpp"
+#line 1271 "parser.cpp"
     break;
 
 
-#line 1282 "parser.cpp"
+#line 1275 "parser.cpp"
 
             default:
               break;
@@ -1699,16 +1692,16 @@ namespace Parser {
   const short
   Parser::yyrline_[] =
   {
-       0,    60,    60,    63,    75,    76,    77,    78,    79,    80,
-      81,    82,    83,    84,    85,    86,    87,    91,    95,   102,
-     106,   113,   117,   121,   125,   132,   136,   143,   147,   154,
-     161,   168,   175,   179,   186,   193,   197,   204,   208,   215,
-     223,   226,   238,   240,   245,   249,   253,   257,   261,   265,
-     269,   273,   277,   281,   288,   292,   296,   300,   304,   308,
-     312,   319,   323,   330,   337,   342,   350,   355,   363,   368,
-     376,   381,   389,   391,   396,   399,   403,   408,   416,   421,
-     427,   431,   433,   435,   437,   442,   444,   446,   448,   450,
-     452,   454,   456,   458
+       0,    65,    65,    66,    78,    79,    80,    81,    82,    83,
+      84,    85,    86,    87,    88,    89,    90,    94,    98,   105,
+     109,   116,   120,   124,   128,   135,   139,   146,   150,   157,
+     164,   171,   178,   182,   189,   196,   200,   207,   209,   214,
+     222,   225,   237,   239,   244,   248,   252,   256,   260,   264,
+     268,   272,   276,   280,   287,   291,   295,   299,   303,   307,
+     311,   318,   322,   329,   336,   341,   349,   354,   362,   367,
+     375,   380,   388,   390,   395,   398,   402,   407,   415,   420,
+     426,   430,   432,   434,   436,   441,   443,   445,   447,   449,
+     451,   453,   455,   457
   };
 
   void
@@ -1793,9 +1786,9 @@ namespace Parser {
 
 #line 18 "parser.y"
 } // Parser
-#line 1797 "parser.cpp"
+#line 1790 "parser.cpp"
 
-#line 462 "parser.y"
+#line 461 "parser.y"
 
 
 void yyerror(const char *s) {

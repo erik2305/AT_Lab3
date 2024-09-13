@@ -329,6 +329,42 @@ public:
     void interpret() override;
 };
 
+class BlockNode : public ASTNode {
+public:
+    std::vector<ASTNode*> statements;
+
+    BlockNode(ASTNode* stmt) : ASTNode(NodeType::StatementList) {
+        if (stmt) {
+            statements.push_back(stmt);
+        }
+    }
+
+    void addStatement(ASTNode* stmt) {
+        if (stmt) {
+            statements.push_back(stmt);
+        }
+    }
+
+    void interpret() override {
+        for (auto stmt : statements) {
+            stmt->interpret();
+        }
+    }
+};
+
+class MatrixRowNode : public ASTNode {
+public:
+    std::vector<ASTNode*> elements;
+
+    MatrixRowNode(std::vector<ASTNode*>* elems)
+        : ASTNode(NodeType::MatrixRow), elements(*elems) {}
+
+    void interpret() override {
+        // Interpretation logic for a matrix row
+    }
+};
+
+
 // Generic interpretation function for traversing the AST
 void interpret(ASTNode *node);
 

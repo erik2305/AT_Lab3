@@ -1,4 +1,3 @@
-%skeleton "lalr1.cc"
 %{
 #include <iostream>
 #include <cstdlib>
@@ -8,13 +7,13 @@
 
 using namespace std;
 
-extern int yylex();
+extern int yylex(Parser::semantic_type *yylval);
 void yyerror(const char *s);
 
 extern ASTNode *ast_root;
-
 %}
 
+%skeleton "lalr1.cc"
 
 %define api.namespace {Parser}
 %define api.parser.class {Parser}
@@ -44,18 +43,16 @@ extern ASTNode *ast_root;
 %token WHILE DO IF ELSE FUNCTION
 %token FORW BACK RIGHT_OP LEFT_OP GETF GETB GETR GETL PUSHF PUSHB PUSHR PUSHL UNDO
 
-%nonassoc ASSIGN
-%nonassoc LPAREN
-%nonassoc COMMA
-%nonassoc RPAREN
-
 %left OR
 %left GT LT
 %left PLUS MINUS
 %left MULTIPLY DIVIDE MODULO
 %right NOT
 
-
+%nonassoc ASSIGN
+%nonassoc COMMA
+%nonassoc RPAREN
+%nonassoc LPAREN
 
 %type <node> program statement variable_declaration constant_declaration array_declaration array_extension assignment increment decrement loop conditional function_declaration function_call robot_operation group_of_statements expression arithmetic_expression logical_expression comparison array_access movement_operator sensor_operator
 
@@ -96,59 +93,59 @@ statement:
 variable_declaration:
     UINT IDENTIFIER ASSIGN arithmetic_expression SEMICOLON
         {
-            $$ = new VarDeclarationNode($2, VarType::UINT, $4);
+            $$ = new VarDeclarationNode(std::string($2), VarType::UINT, $4);
         }
     | BOOLEAN IDENTIFIER ASSIGN logical_expression SEMICOLON
         {
-            $$ = new VarDeclarationNode($2, VarType::BOOLEAN, $4);
+            $$ = new VarDeclarationNode(std::string($2), VarType::BOOLEAN, $4);
         }
     ;
 
 constant_declaration:
     CUINT IDENTIFIER ASSIGN arithmetic_expression SEMICOLON
         {
-            $$ = new ConstDeclarationNode($2, VarType::UINT, $4);
+            $$ = new ConstDeclarationNode(std::string($2), VarType::UINT, $4);
         }
     | CBOOLEAN IDENTIFIER ASSIGN logical_expression SEMICOLON
         {
-            $$ = new ConstDeclarationNode($2, VarType::BOOLEAN, $4);
+            $$ = new ConstDeclarationNode(std::string($2), VarType::BOOLEAN, $4);
         }
     ;
 
 array_declaration:
     ARRAY1DBOOL IDENTIFIER ASSIGN LBRACKET logical_expression_list RBRACKET SEMICOLON
         {
-            $$ = new ArrayDeclarationNode($2, VarType::BOOLEAN, 1, $5);
+            $$ = new ArrayDeclarationNode(std::string($2), VarType::BOOLEAN, 1, $5);
         }
     | ARRAY2DBOOL IDENTIFIER ASSIGN LBRACKET logical_expression_matrix RBRACKET SEMICOLON
         {
-            $$ = new ArrayDeclarationNode($2, VarType::BOOLEAN, 2, $5);
+            $$ = new ArrayDeclarationNode(std::string($2), VarType::BOOLEAN, 2, $5);
         }
     | ARRAY1DUINT IDENTIFIER ASSIGN LBRACKET arithmetic_expression_list RBRACKET SEMICOLON
         {
-            $$ = new ArrayDeclarationNode($2, VarType::UINT, 1, $5);
+            $$ = new ArrayDeclarationNode(std::string($2), VarType::UINT, 1, $5);
         }
     | ARRAY2DUINT IDENTIFIER ASSIGN LBRACKET arithmetic_expression_matrix RBRACKET SEMICOLON
         {
-            $$ = new ArrayDeclarationNode($2, VarType::UINT, 2, $5);
+            $$ = new ArrayDeclarationNode(std::string($2), VarType::UINT, 2, $5);
         }
     ;
 
 array_extension:
     EXTEND1 IDENTIFIER arithmetic_expression SEMICOLON
         {
-            $$ = new ArrayExtensionNode($2, 1, $3);
+            $$ = new ArrayExtensionNode(std::string($2), 1, $3);
         }
     | EXTEND2 IDENTIFIER arithmetic_expression arithmetic_expression SEMICOLON
         {
-            $$ = new ArrayExtensionNode($2, 2, $3, $4);
+            $$ = new ArrayExtensionNode(std::string($2), 2, $3, $4);
         }
     ;
 
 assignment:
     IDENTIFIER ASSIGN expression SEMICOLON
         {
-            $$ = new AssignmentNode($1, $3);
+            $$ = new AssignmentNode(std::string($1), $3);
         }
     | array_access ASSIGN expression SEMICOLON
         {
@@ -159,14 +156,14 @@ assignment:
 increment:
     INC IDENTIFIER SEMICOLON
         {
-            $$ = new IncDecNode($2, 1);
+            $$ = new IncDecNode(std::string($2), 1);
         }
     ;
 
 decrement:
     DEC IDENTIFIER SEMICOLON
         {
-            $$ = new IncDecNode($2, -1);
+            $$ = new IncDecNode(std::string($2), -1);
         }
     ;
 
@@ -191,18 +188,18 @@ conditional:
 function_declaration:
     return_variables FUNCTION IDENTIFIER LPAREN parameters RPAREN group_of_statements
         {
-            $$ = new FunctionDeclarationNode($3, $1, $5, $7);
+            $$ = new FunctionDeclarationNode(std::string($3), $1, $5, $7);
         }
     ;
 
 function_call:
     variables ASSIGN IDENTIFIER LPAREN expressions RPAREN SEMICOLON
         {
-            $$ = new FunctionCallNode($3, $5, $1);
+            $$ = new FunctionCallNode(std::string($3), $5, $1);
         }
     | IDENTIFIER LPAREN expressions RPAREN SEMICOLON
         {
-            $$ = new FunctionCallNode($1, $3);
+            $$ = new FunctionCallNode(std::string($1), $3);
         }
     ;
 
@@ -274,7 +271,7 @@ arithmetic_expression:
         }
     | IDENTIFIER
         {
-            $$ = new VariableNode($1);
+            $$ = new VariableNode(std::string($1));
         }
     | function_call
         {
@@ -305,7 +302,7 @@ logical_expression:
         }
     | IDENTIFIER
         {
-            $$ = new VariableNode($1);
+            $$ = new VariableNode(std::string($1));
         }
     | function_call
         {
@@ -331,7 +328,7 @@ comparison:
 array_access:
     IDENTIFIER LPAREN arithmetic_expression_list RPAREN
         {
-            $$ = new ArrayAccessNode($1, $3);
+            $$ = new ArrayAccessNode(std::string($1), $3);
         }
     ;
 
@@ -405,11 +402,11 @@ variables:
     IDENTIFIER
         {
             $$ = new std::vector<ASTNode*>();
-            $$->push_back(new VariableNode($1));
+            $$->push_back(new VariableNode(std::string($1)));
         }
     | variables COMMA IDENTIFIER
         {
-            $1->push_back(new VariableNode($3));
+            $1->push_back(new VariableNode(std::string($3)));
             $$ = $1;
         }
     ;

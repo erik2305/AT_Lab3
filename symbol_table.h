@@ -6,6 +6,8 @@
 #include <vector>
 #include "ast.h"
 
+class ASTNode;
+
 enum class VarType {
     UINT,
     BOOLEAN,

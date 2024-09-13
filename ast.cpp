@@ -1,15 +1,17 @@
 #include "ast.h"
+#include "symbol_table.h"
 #include <iostream>
 
 // VarDeclarationNode interpretation
 void VarDeclarationNode::interpret() {
-    // Interpret the expression to get the value (recursive interpretation)
+    // Interpret the expression to get the value
     expression->interpret();
 
-    // Add the variable to the symbol table, assuming expression evaluates to a value
+    // Add variable to the symbol table
     SymbolTable::getInstance().addVariable(id, varType, false);
 
-    std::cout << "Variable '" << id << "' declared of type " << (varType == VarType::UINT ? "UINT" : "BOOLEAN") << std::endl;
+    std::cout << "Variable '" << id << "' declared of type " 
+              << (varType == VarType::UINT ? "UINT" : "BOOLEAN") << "." << std::endl;
 }
 
 // ConstDeclarationNode interpretation
@@ -20,7 +22,8 @@ void ConstDeclarationNode::interpret() {
     // Add constant to the symbol table
     SymbolTable::getInstance().addVariable(id, constType, true);
 
-    std::cout << "Constant '" << id << "' declared of type " << (constType == VarType::UINT ? "UINT" : "BOOLEAN") << std::endl;
+    std::cout << "Constant '" << id << "' declared of type " 
+              << (constType == VarType::UINT ? "UINT" : "BOOLEAN") << "." << std::endl;
 }
 
 // ArrayDeclarationNode interpretation
@@ -56,20 +59,21 @@ void AssignmentNode::interpret() {
     // Assign the value in the symbol table
     SymbolTable::getInstance().assignVariable(id, expression);
 
-    std::cout << "Variable '" << id << "' assigned a value." << std::endl;
+    std::cout << "Variable '" << id << "' assigned a new value." << std::endl;
 }
 
 // ArrayAssignmentNode interpretation
 void ArrayAssignmentNode::interpret() {
-    // Interpret the expression to get the value
-    expression->interpret();
     // Interpret the array access to determine which element to assign to
     arrayAccess->interpret();
+
+    // Interpret the expression to get the value
+    expression->interpret();
 
     // Assign the value to the array in the symbol table
     SymbolTable::getInstance().assignArrayElement(arrayAccess, expression);
 
-    std::cout << "Array element assigned a value." << std::endl;
+    std::cout << "Array element assigned a new value." << std::endl;
 }
 
 // IncDecNode interpretation (Increment/Decrement)
@@ -80,19 +84,20 @@ void IncDecNode::interpret() {
     // Increment or decrement the value
     if (incrementValue == 1) {
         currentValue++;
-        std::cout << "Variable '" << id << "' incremented." << std::endl;
+        std::cout << "Variable '" << id << "' incremented to " << currentValue << "." << std::endl;
     } else {
         currentValue--;
-        std::cout << "Variable '" << id << "' decremented." << std::endl;
+        std::cout << "Variable '" << id << "' decremented to " << currentValue << "." << std::endl;
     }
 
     // Update the variable's value in the symbol table
-    SymbolTable::getInstance().assignVariable(id, new IntNode(currentValue));
+    // Create a new IntNode with the updated value
+    IntNode updatedValue(currentValue);
+    SymbolTable::getInstance().assignVariable(id, &updatedValue);
 }
 
 // WhileNode interpretation (While loop)
 void WhileNode::interpret() {
-    // While loop with interpreted condition
     while (true) {
         condition->interpret();
         bool conditionResult = SymbolTable::getInstance().getBooleanValue(condition);
@@ -111,10 +116,11 @@ void IfNode::interpret() {
 
     if (conditionResult) {
         thenBody->interpret();
+        std::cout << "If condition true, then branch executed." << std::endl;
     } else if (elseBody) {
         elseBody->interpret();
+        std::cout << "If condition false, else branch executed." << std::endl;
     }
-    std::cout << "If statement executed." << std::endl;
 }
 
 // FunctionDeclarationNode interpretation
@@ -133,105 +139,123 @@ void FunctionCallNode::interpret() {
 
 // RobotOperationNode interpretation
 void RobotOperationNode::interpret() {
-    // Interpret the contained operation node
+    // Interpret the contained operation node (MovementNode or SensorNode)
     operationNode->interpret();
-
-    // Depending on the type of operationNode, perform specific actions
-    if (operationNode->type == NodeType::Movement) {
-        MovementNode *movNode = dynamic_cast<MovementNode*>(operationNode);
-        if (movNode) {
-            // Execute movement action
-            std::cout << "Executing Movement: " << movNode->movementAction << std::endl;
-            // Add actual robot movement logic here
-        }
-    }
-    else if (operationNode->type == NodeType::Sensor) {
-        SensorNode *senNode = dynamic_cast<SensorNode*>(operationNode);
-        if (senNode) {
-            // Execute sensor action
-            std::cout << "Executing Sensor Action: " << senNode->sensorAction << std::endl;
-            // Add actual sensor logic here
-        }
-    }
 }
-
 
 // MovementNode interpretation
 void MovementNode::interpret() {
-    std::cout << "Movement operation '" << movementAction << "' executed." << std::endl;
+    // Execute movement action
+    std::cout << "Executing Movement Action: " << movementAction << std::endl;
+    // Add actual robot movement logic here
 }
 
 // SensorNode interpretation
 void SensorNode::interpret() {
-    std::cout << "Sensor operation '" << sensorAction << "' executed." << std::endl;
+    // Execute sensor action
+    std::cout << "Executing Sensor Action: " << sensorAction << std::endl;
+    // Add actual sensor logic here
 }
 
 // ArithmeticOpNode interpretation (Binary arithmetic operations)
 void ArithmeticOpNode::interpret() {
     left->interpret();
     right->interpret();
-    int leftValue = SymbolTable::getInstance().getIntValue(left);
-    int rightValue = SymbolTable::getInstance().getIntValue(right);
+    int leftValue = SymbolTable::getInstance().getVariableValue(dynamic_cast<VariableNode*>(left)->id);
+    int rightValue = SymbolTable::getInstance().getVariableValue(dynamic_cast<VariableNode*>(right)->id);
     int result = 0;
 
     switch (operation) {
         case '+': result = leftValue + rightValue; break;
         case '-': result = leftValue - rightValue; break;
         case '*': result = leftValue * rightValue; break;
-        case '/': result = leftValue / rightValue; break;
-        case '%': result = leftValue % rightValue; break;
+        case '/': 
+            if (rightValue == 0) {
+                std::cerr << "Division by zero error." << std::endl;
+                exit(1);
+            }
+            result = leftValue / rightValue; break;
+        case '%': 
+            if (rightValue == 0) {
+                std::cerr << "Modulo by zero error." << std::endl;
+                exit(1);
+            }
+            result = leftValue % rightValue; break;
     }
 
     std::cout << "Arithmetic operation: " << leftValue << " " << operation << " " << rightValue << " = " << result << std::endl;
+
+    // Optionally, store the result somewhere or assign it to a variable
 }
 
-// LogicalOpNode interpretation (Binary logical operations)
+// LogicalOpNode interpretation (Binary and Unary logical operations)
 void LogicalOpNode::interpret() {
-    left->interpret();
-    if (right) right->interpret();
-    
-    bool result = false;
-    bool leftValue = SymbolTable::getInstance().getBooleanValue(left);
-    if (right) {
+    if (operation == 'N') {  // NOT operation (Unary)
+        left->interpret();
+        bool operand = SymbolTable::getInstance().getBooleanValue(left);
+        bool result = !operand;
+        std::cout << "Logical NOT operation: !" << operand << " = " << result << std::endl;
+    }
+    else {  // Binary operations like OR
+        left->interpret();
+        right->interpret();
+        bool leftValue = SymbolTable::getInstance().getBooleanValue(left);
         bool rightValue = SymbolTable::getInstance().getBooleanValue(right);
-        if (operation == 'O') result = leftValue || rightValue;
-    } else if (operation == 'N') {
-        result = !leftValue;
+        bool result = false;
+
+        if (operation == 'O') {  // OR operation
+            result = leftValue || rightValue;
+            std::cout << "Logical OR operation: " << leftValue << " || " << rightValue << " = " << result << std::endl;
+        }
+        // Add other logical operations like AND if needed
     }
 
-    std::cout << "Logical operation executed." << std::endl;
+    // Optionally, store the result somewhere or use it in control structures
 }
 
 // ComparisonNode interpretation (Comparison operations)
 void ComparisonNode::interpret() {
+    // Interpret both sides of the comparison
     left->interpret();
     right->interpret();
-    int leftValue = SymbolTable::getInstance().getIntValue(left);
-    int rightValue = SymbolTable::getInstance().getIntValue(right);
+    int leftValue = SymbolTable::getInstance().getVariableValue(dynamic_cast<VariableNode*>(left)->id);
+    int rightValue = SymbolTable::getInstance().getVariableValue(dynamic_cast<VariableNode*>(right)->id);
     bool result = false;
 
-    if (operation == 'G') result = (leftValue > rightValue);
-    else if (operation == 'L') result = (leftValue < rightValue);
+    if (operation == 'G') {
+        result = (leftValue > rightValue);
+        std::cout << "Comparison: " << leftValue << " > " << rightValue << " = " << result << std::endl;
+    }
+    else if (operation == 'L') {
+        result = (leftValue < rightValue);
+        std::cout << "Comparison: " << leftValue << " < " << rightValue << " = " << result << std::endl;
+    }
 
-    std::cout << "Comparison operation: " << leftValue << " " << operation << " " << rightValue << " = " << result << std::endl;
+    // Optionally, store the result somewhere or use it in control structures
 }
 
 // IntNode interpretation
 void IntNode::interpret() {
     // Int literal is already a value, no interpretation needed
-    std::cout << "Integer value: " << value << std::endl;
+    std::cout << "Integer Literal: " << value << std::endl;
 }
 
 // BoolNode interpretation
 void BoolNode::interpret() {
     // Bool literal is already a value, no interpretation needed
-    std::cout << "Boolean value: " << value << std::endl;
+    std::cout << "Boolean Literal: " << (value ? "true" : "false") << std::endl;
 }
 
 // VariableNode interpretation
 void VariableNode::interpret() {
     // Retrieve the value of the variable from the symbol table
-    std::cout << "Variable '" << id << "' interpreted." << std::endl;
+    Variable* var = SymbolTable::getInstance().getVariable(id);
+    if (var->type == VarType::UINT) {
+        std::cout << "Variable '" << id << "' has value: " << var->intValue << std::endl;
+    }
+    else if (var->type == VarType::BOOLEAN) {
+        std::cout << "Variable '" << id << "' has value: " << (var->boolValue ? "true" : "false") << std::endl;
+    }
 }
 
 // ArrayAccessNode interpretation
@@ -240,7 +264,9 @@ void ArrayAccessNode::interpret() {
     for (ASTNode* index : *indices) {
         index->interpret();
     }
-    std::cout << "Array access interpreted for array '" << id << "'." << std::endl;
+    std::cout << "Accessing array '" << id << "'." << std::endl;
+
+    // Implement actual array access logic based on indices
 }
 
 // Generic interpretation function for traversing the AST
