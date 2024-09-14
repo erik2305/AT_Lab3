@@ -126,7 +126,7 @@ void IfNode::interpret() {
 // FunctionDeclarationNode interpretation
 void FunctionDeclarationNode::interpret() {
     // Add the function to the symbol table
-    SymbolTable::getInstance().addFunction(id, returnVars, parameters, body);
+    SymbolTable::getInstance().addFunction(id, returnVars, params, body);
     std::cout << "Function '" << id << "' declared." << std::endl;
 }
 
@@ -161,8 +161,8 @@ void SensorNode::interpret() {
 void ArithmeticOpNode::interpret() {
     left->interpret();
     right->interpret();
-    int leftValue = SymbolTable::getInstance().getVariableValue(dynamic_cast<VariableNode*>(left)->id);
-    int rightValue = SymbolTable::getInstance().getVariableValue(dynamic_cast<VariableNode*>(right)->id);
+    int leftValue = SymbolTable::getInstance().getVariableValue(dynamic_cast<VariableNode*>(left)->getName());
+    int rightValue = SymbolTable::getInstance().getVariableValue(dynamic_cast<VariableNode*>(right)->getName());
     int result = 0;
 
     switch (operation) {
@@ -218,8 +218,8 @@ void ComparisonNode::interpret() {
     // Interpret both sides of the comparison
     left->interpret();
     right->interpret();
-    int leftValue = SymbolTable::getInstance().getVariableValue(dynamic_cast<VariableNode*>(left)->id);
-    int rightValue = SymbolTable::getInstance().getVariableValue(dynamic_cast<VariableNode*>(right)->id);
+    int leftValue = SymbolTable::getInstance().getVariableValue(dynamic_cast<VariableNode*>(left)->getName());
+    int rightValue = SymbolTable::getInstance().getVariableValue(dynamic_cast<VariableNode*>(right)->getName());
     bool result = false;
 
     if (operation == 'G') {
@@ -249,12 +249,12 @@ void BoolNode::interpret() {
 // VariableNode interpretation
 void VariableNode::interpret() {
     // Retrieve the value of the variable from the symbol table
-    Variable* var = SymbolTable::getInstance().getVariable(id);
+    Variable* var = SymbolTable::getInstance().getVariable(getName());
     if (var->type == VarType::UINT) {
-        std::cout << "Variable '" << id << "' has value: " << var->intValue << std::endl;
+        std::cout << "Variable '" << getName() << "' has value: " << var->intValue << std::endl;
     }
     else if (var->type == VarType::BOOLEAN) {
-        std::cout << "Variable '" << id << "' has value: " << (var->boolValue ? "true" : "false") << std::endl;
+        std::cout << "Variable '" << getName() << "' has value: " << (var->boolValue ? "true" : "false") << std::endl;
     }
 }
 

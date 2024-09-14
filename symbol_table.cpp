@@ -71,9 +71,9 @@ bool SymbolTable::getBooleanValue(ASTNode *expr) {
     }
     else if (expr->type == NodeType::Variable) {
         VariableNode* varNode = dynamic_cast<VariableNode*>(expr);
-        Variable* var = getVariable(varNode->id);
+        Variable* var = getVariable(varNode->getName());
         if (var->type != VarType::BOOLEAN) {
-            std::cerr << "Type mismatch: Variable " << varNode->id << " is not of type BOOLEAN." << std::endl;
+            std::cerr << "Type mismatch: Variable " << varNode->getName() << " is not of type BOOLEAN." << std::endl;
             exit(1);
         }
         return var->boolValue;

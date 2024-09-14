@@ -1,34 +1,30 @@
 %{
-#include "parser.hpp"
-#include "ast.h"
-#include <cstring>
+#include "parser.hpp" // Ensure this matches the Bison-generated header
+#include <FlexLexer.h>
+#include <string>
 #include <cstdlib>
+#include <cstring>
+#include <iostream>
+#include <stdio.h> // For fileno()
 
-// Use the correct namespace
-using namespace Parser;
+using namespace ParserNS;
 
-// Define the yylex function signature as expected by Bison
-#define YY_DECL int yylex(semantic_type * yylval, location_type &loc)
+// Define the Lexer class
+class Lexer : public yyFlexLexer {
+public:
+    Lexer(std::istream* in = &std::cin, std::ostream* out = &std::cout)
+        : yyFlexLexer(in, out) {}
+
+    int yylex(ParserClass::semantic_type* yylval);
+};
+
+#define YY_DECL int Lexer::yylex(ParserClass::semantic_type* yylval)
+
 %}
 
-%option noyywrap
+%option noyywrap c++
 
 %%
-
-[0-9]+ {
-    yylval->int_val = atoi(yytext);
-    return UNSIGNED_INT;
-}
-
-"true" {
-    yylval->bool_val = true;
-    return BOOL_CONST;
-}
-
-"false" {
-    yylval->bool_val = false;
-    return BOOL_CONST;
-}
 
 "WHILE"       { return WHILE; }
 "do"          { return DO; }
@@ -49,15 +45,14 @@ using namespace Parser;
 "pushl"       { return PUSHL; }
 "undo"        { return UNDO; }
 
-[a-zA-Z_][a-zA-Z0-9_]* {
-    yylval->id = strdup(yytext);
-    return IDENTIFIER;
-}
-
 "1DARRAYOFBOOL"     { return ARRAY1DBOOL; }
 "2DARRAYOFBOOL"     { return ARRAY2DBOOL; }
 "1DARRAYOFUINT"     { return ARRAY1DUINT; }
 "2DARRAYOFUINT"     { return ARRAY2DUINT; }
+
+"++" { return INC; }
+"--" { return DEC; }
+"||" { return OR; }
 
 "=" { return ASSIGN; }
 ";" { return SEMICOLON; }
@@ -73,14 +68,21 @@ using namespace Parser;
 "*" { return MULTIPLY; }
 "/" { return DIVIDE; }
 "%" { return MODULO; }
-"++" { return INC; }
-"--" { return DEC; }
 "!" { return NOT; }
-"||" { return OR; }
 ">" { return GT; }
 "<" { return LT; }
 
-[ \t\r\n]+ ;  // Ignore whitespace
+"true"       { *yylval = true; return BOOL_CONST; }
+"false"      { *yylval = false; return BOOL_CONST; }
+
+[0-9]+       { *yylval = std::stoi(yytext); return UNSIGNED_INT; }
+
+[a-zA-Z_][a-zA-Z0-9_]* { 
+                *yylval = std::string(yytext); 
+                return IDENTIFIER; 
+            }
+
+[ \t\r\n]+   ; // Ignore whitespace
 
 . {
     std::cerr << "Unknown character: " << yytext << std::endl;
@@ -89,6 +91,6 @@ using namespace Parser;
 
 %%
 
-int yylex(Parser::semantic_type * yylval, Parser::location_type &loc) {
-    return yylex(yylval, loc);
+int Lexer::yylex(ParserClass::semantic_type* yylval) {
+    return yylex(yylval);
 }

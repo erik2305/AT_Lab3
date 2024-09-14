@@ -45,17 +45,13 @@
 #include "ast.h"
 #include "symbol_table.h"
 
-using namespace std;
-
-// Declare yylex with the correct signature expected by Bison
-int yylex(Parser::semantic_type *yylval, Parser::location_type &loc);
-
-// Update yyerror to match Bison's expectations
-void yyerror(Parser::context_type& context, const char *s);
+// Forward declarations
+int yylex(ParserNS::ParserClass::semantic_type *yylval);
+void yyerror(const std::string& message);
 
 extern ASTNode *ast_root;
 
-#line 59 "parser.cpp"
+#line 55 "parser.cpp"
 
 
 #include "parser.hpp"
@@ -132,12 +128,12 @@ extern ASTNode *ast_root;
 #define YYERROR         goto yyerrorlab
 #define YYRECOVERING()  (!!yyerrstatus_)
 
-#line 21 "parser.y"
-namespace Parser {
-#line 138 "parser.cpp"
+#line 17 "parser.y"
+namespace ParserNS {
+#line 134 "parser.cpp"
 
   /// Build a parser object.
-  Parser::Parser ()
+  ParserClass::ParserClass ()
 #if YYDEBUG
     : yydebug_ (false),
       yycdebug_ (&std::cerr)
@@ -146,140 +142,46 @@ namespace Parser {
 #endif
   {}
 
-  Parser::~Parser ()
+  ParserClass::~ParserClass ()
   {}
 
-  Parser::syntax_error::~syntax_error () YY_NOEXCEPT YY_NOTHROW
+  ParserClass::syntax_error::~syntax_error () YY_NOEXCEPT YY_NOTHROW
   {}
 
   /*---------.
   | symbol.  |
   `---------*/
 
-  // basic_symbol.
-  template <typename Base>
-  Parser::basic_symbol<Base>::basic_symbol (const basic_symbol& that)
-    : Base (that)
-    , value (that.value)
-  {}
-
-
-  /// Constructor for valueless symbols.
-  template <typename Base>
-  Parser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t)
-    : Base (t)
-    , value ()
-  {}
-
-  template <typename Base>
-  Parser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, YY_RVREF (value_type) v)
-    : Base (t)
-    , value (YY_MOVE (v))
-  {}
-
-
-  template <typename Base>
-  Parser::symbol_kind_type
-  Parser::basic_symbol<Base>::type_get () const YY_NOEXCEPT
-  {
-    return this->kind ();
-  }
-
-
-  template <typename Base>
-  bool
-  Parser::basic_symbol<Base>::empty () const YY_NOEXCEPT
-  {
-    return this->kind () == symbol_kind::S_YYEMPTY;
-  }
-
-  template <typename Base>
-  void
-  Parser::basic_symbol<Base>::move (basic_symbol& s)
-  {
-    super_type::move (s);
-    value = YY_MOVE (s.value);
-  }
-
-  // by_kind.
-  Parser::by_kind::by_kind () YY_NOEXCEPT
-    : kind_ (symbol_kind::S_YYEMPTY)
-  {}
-
-#if 201103L <= YY_CPLUSPLUS
-  Parser::by_kind::by_kind (by_kind&& that) YY_NOEXCEPT
-    : kind_ (that.kind_)
-  {
-    that.clear ();
-  }
-#endif
-
-  Parser::by_kind::by_kind (const by_kind& that) YY_NOEXCEPT
-    : kind_ (that.kind_)
-  {}
-
-  Parser::by_kind::by_kind (token_kind_type t) YY_NOEXCEPT
-    : kind_ (yytranslate_ (t))
-  {}
-
-
-
-  void
-  Parser::by_kind::clear () YY_NOEXCEPT
-  {
-    kind_ = symbol_kind::S_YYEMPTY;
-  }
-
-  void
-  Parser::by_kind::move (by_kind& that)
-  {
-    kind_ = that.kind_;
-    that.clear ();
-  }
-
-  Parser::symbol_kind_type
-  Parser::by_kind::kind () const YY_NOEXCEPT
-  {
-    return kind_;
-  }
-
-
-  Parser::symbol_kind_type
-  Parser::by_kind::type_get () const YY_NOEXCEPT
-  {
-    return this->kind ();
-  }
-
 
 
   // by_state.
-  Parser::by_state::by_state () YY_NOEXCEPT
+  ParserClass::by_state::by_state () YY_NOEXCEPT
     : state (empty_state)
   {}
 
-  Parser::by_state::by_state (const by_state& that) YY_NOEXCEPT
+  ParserClass::by_state::by_state (const by_state& that) YY_NOEXCEPT
     : state (that.state)
   {}
 
   void
-  Parser::by_state::clear () YY_NOEXCEPT
+  ParserClass::by_state::clear () YY_NOEXCEPT
   {
     state = empty_state;
   }
 
   void
-  Parser::by_state::move (by_state& that)
+  ParserClass::by_state::move (by_state& that)
   {
     state = that.state;
     that.clear ();
   }
 
-  Parser::by_state::by_state (state_type s) YY_NOEXCEPT
+  ParserClass::by_state::by_state (state_type s) YY_NOEXCEPT
     : state (s)
   {}
 
-  Parser::symbol_kind_type
-  Parser::by_state::kind () const YY_NOEXCEPT
+  ParserClass::symbol_kind_type
+  ParserClass::by_state::kind () const YY_NOEXCEPT
   {
     if (state == empty_state)
       return symbol_kind::S_YYEMPTY;
@@ -287,39 +189,229 @@ namespace Parser {
       return YY_CAST (symbol_kind_type, yystos_[+state]);
   }
 
-  Parser::stack_symbol_type::stack_symbol_type ()
+  ParserClass::stack_symbol_type::stack_symbol_type ()
   {}
 
-  Parser::stack_symbol_type::stack_symbol_type (YY_RVREF (stack_symbol_type) that)
-    : super_type (YY_MOVE (that.state), YY_MOVE (that.value))
+  ParserClass::stack_symbol_type::stack_symbol_type (YY_RVREF (stack_symbol_type) that)
+    : super_type (YY_MOVE (that.state))
   {
+    switch (that.kind ())
+    {
+      case symbol_kind::S_program: // program
+      case symbol_kind::S_statement: // statement
+      case symbol_kind::S_assignment: // assignment
+      case symbol_kind::S_function_call: // function_call
+      case symbol_kind::S_variable_declaration: // variable_declaration
+      case symbol_kind::S_constant_declaration: // constant_declaration
+      case symbol_kind::S_array_declaration: // array_declaration
+      case symbol_kind::S_array_extension: // array_extension
+      case symbol_kind::S_increment: // increment
+      case symbol_kind::S_decrement: // decrement
+      case symbol_kind::S_loop: // loop
+      case symbol_kind::S_conditional: // conditional
+      case symbol_kind::S_function_declaration: // function_declaration
+      case symbol_kind::S_robot_operation: // robot_operation
+      case symbol_kind::S_group_of_statements: // group_of_statements
+      case symbol_kind::S_expression: // expression
+      case symbol_kind::S_array_access: // array_access
+      case symbol_kind::S_movement_operator: // movement_operator
+      case symbol_kind::S_sensor_operator: // sensor_operator
+        value.YY_MOVE_OR_COPY< ASTNode* > (YY_MOVE (that.value));
+        break;
+
+      case symbol_kind::S_BOOL_CONST: // BOOL_CONST
+        value.YY_MOVE_OR_COPY< bool > (YY_MOVE (that.value));
+        break;
+
+      case symbol_kind::S_UNSIGNED_INT: // UNSIGNED_INT
+        value.YY_MOVE_OR_COPY< int > (YY_MOVE (that.value));
+        break;
+
+      case symbol_kind::S_IDENTIFIER: // IDENTIFIER
+        value.YY_MOVE_OR_COPY< std::string > (YY_MOVE (that.value));
+        break;
+
+      case symbol_kind::S_statements: // statements
+      case symbol_kind::S_expressions: // expressions
+      case symbol_kind::S_return_variables: // return_variables
+      case symbol_kind::S_parameters: // parameters
+      case symbol_kind::S_variables: // variables
+        value.YY_MOVE_OR_COPY< std::vector<ASTNode*>* > (YY_MOVE (that.value));
+        break;
+
+      default:
+        break;
+    }
+
 #if 201103L <= YY_CPLUSPLUS
     // that is emptied.
     that.state = empty_state;
 #endif
   }
 
-  Parser::stack_symbol_type::stack_symbol_type (state_type s, YY_MOVE_REF (symbol_type) that)
-    : super_type (s, YY_MOVE (that.value))
+  ParserClass::stack_symbol_type::stack_symbol_type (state_type s, YY_MOVE_REF (symbol_type) that)
+    : super_type (s)
   {
+    switch (that.kind ())
+    {
+      case symbol_kind::S_program: // program
+      case symbol_kind::S_statement: // statement
+      case symbol_kind::S_assignment: // assignment
+      case symbol_kind::S_function_call: // function_call
+      case symbol_kind::S_variable_declaration: // variable_declaration
+      case symbol_kind::S_constant_declaration: // constant_declaration
+      case symbol_kind::S_array_declaration: // array_declaration
+      case symbol_kind::S_array_extension: // array_extension
+      case symbol_kind::S_increment: // increment
+      case symbol_kind::S_decrement: // decrement
+      case symbol_kind::S_loop: // loop
+      case symbol_kind::S_conditional: // conditional
+      case symbol_kind::S_function_declaration: // function_declaration
+      case symbol_kind::S_robot_operation: // robot_operation
+      case symbol_kind::S_group_of_statements: // group_of_statements
+      case symbol_kind::S_expression: // expression
+      case symbol_kind::S_array_access: // array_access
+      case symbol_kind::S_movement_operator: // movement_operator
+      case symbol_kind::S_sensor_operator: // sensor_operator
+        value.move< ASTNode* > (YY_MOVE (that.value));
+        break;
+
+      case symbol_kind::S_BOOL_CONST: // BOOL_CONST
+        value.move< bool > (YY_MOVE (that.value));
+        break;
+
+      case symbol_kind::S_UNSIGNED_INT: // UNSIGNED_INT
+        value.move< int > (YY_MOVE (that.value));
+        break;
+
+      case symbol_kind::S_IDENTIFIER: // IDENTIFIER
+        value.move< std::string > (YY_MOVE (that.value));
+        break;
+
+      case symbol_kind::S_statements: // statements
+      case symbol_kind::S_expressions: // expressions
+      case symbol_kind::S_return_variables: // return_variables
+      case symbol_kind::S_parameters: // parameters
+      case symbol_kind::S_variables: // variables
+        value.move< std::vector<ASTNode*>* > (YY_MOVE (that.value));
+        break;
+
+      default:
+        break;
+    }
+
     // that is emptied.
     that.kind_ = symbol_kind::S_YYEMPTY;
   }
 
 #if YY_CPLUSPLUS < 201103L
-  Parser::stack_symbol_type&
-  Parser::stack_symbol_type::operator= (const stack_symbol_type& that)
+  ParserClass::stack_symbol_type&
+  ParserClass::stack_symbol_type::operator= (const stack_symbol_type& that)
   {
     state = that.state;
-    value = that.value;
+    switch (that.kind ())
+    {
+      case symbol_kind::S_program: // program
+      case symbol_kind::S_statement: // statement
+      case symbol_kind::S_assignment: // assignment
+      case symbol_kind::S_function_call: // function_call
+      case symbol_kind::S_variable_declaration: // variable_declaration
+      case symbol_kind::S_constant_declaration: // constant_declaration
+      case symbol_kind::S_array_declaration: // array_declaration
+      case symbol_kind::S_array_extension: // array_extension
+      case symbol_kind::S_increment: // increment
+      case symbol_kind::S_decrement: // decrement
+      case symbol_kind::S_loop: // loop
+      case symbol_kind::S_conditional: // conditional
+      case symbol_kind::S_function_declaration: // function_declaration
+      case symbol_kind::S_robot_operation: // robot_operation
+      case symbol_kind::S_group_of_statements: // group_of_statements
+      case symbol_kind::S_expression: // expression
+      case symbol_kind::S_array_access: // array_access
+      case symbol_kind::S_movement_operator: // movement_operator
+      case symbol_kind::S_sensor_operator: // sensor_operator
+        value.copy< ASTNode* > (that.value);
+        break;
+
+      case symbol_kind::S_BOOL_CONST: // BOOL_CONST
+        value.copy< bool > (that.value);
+        break;
+
+      case symbol_kind::S_UNSIGNED_INT: // UNSIGNED_INT
+        value.copy< int > (that.value);
+        break;
+
+      case symbol_kind::S_IDENTIFIER: // IDENTIFIER
+        value.copy< std::string > (that.value);
+        break;
+
+      case symbol_kind::S_statements: // statements
+      case symbol_kind::S_expressions: // expressions
+      case symbol_kind::S_return_variables: // return_variables
+      case symbol_kind::S_parameters: // parameters
+      case symbol_kind::S_variables: // variables
+        value.copy< std::vector<ASTNode*>* > (that.value);
+        break;
+
+      default:
+        break;
+    }
+
     return *this;
   }
 
-  Parser::stack_symbol_type&
-  Parser::stack_symbol_type::operator= (stack_symbol_type& that)
+  ParserClass::stack_symbol_type&
+  ParserClass::stack_symbol_type::operator= (stack_symbol_type& that)
   {
     state = that.state;
-    value = that.value;
+    switch (that.kind ())
+    {
+      case symbol_kind::S_program: // program
+      case symbol_kind::S_statement: // statement
+      case symbol_kind::S_assignment: // assignment
+      case symbol_kind::S_function_call: // function_call
+      case symbol_kind::S_variable_declaration: // variable_declaration
+      case symbol_kind::S_constant_declaration: // constant_declaration
+      case symbol_kind::S_array_declaration: // array_declaration
+      case symbol_kind::S_array_extension: // array_extension
+      case symbol_kind::S_increment: // increment
+      case symbol_kind::S_decrement: // decrement
+      case symbol_kind::S_loop: // loop
+      case symbol_kind::S_conditional: // conditional
+      case symbol_kind::S_function_declaration: // function_declaration
+      case symbol_kind::S_robot_operation: // robot_operation
+      case symbol_kind::S_group_of_statements: // group_of_statements
+      case symbol_kind::S_expression: // expression
+      case symbol_kind::S_array_access: // array_access
+      case symbol_kind::S_movement_operator: // movement_operator
+      case symbol_kind::S_sensor_operator: // sensor_operator
+        value.move< ASTNode* > (that.value);
+        break;
+
+      case symbol_kind::S_BOOL_CONST: // BOOL_CONST
+        value.move< bool > (that.value);
+        break;
+
+      case symbol_kind::S_UNSIGNED_INT: // UNSIGNED_INT
+        value.move< int > (that.value);
+        break;
+
+      case symbol_kind::S_IDENTIFIER: // IDENTIFIER
+        value.move< std::string > (that.value);
+        break;
+
+      case symbol_kind::S_statements: // statements
+      case symbol_kind::S_expressions: // expressions
+      case symbol_kind::S_return_variables: // return_variables
+      case symbol_kind::S_parameters: // parameters
+      case symbol_kind::S_variables: // variables
+        value.move< std::vector<ASTNode*>* > (that.value);
+        break;
+
+      default:
+        break;
+    }
+
     // that is emptied.
     that.state = empty_state;
     return *this;
@@ -328,19 +420,16 @@ namespace Parser {
 
   template <typename Base>
   void
-  Parser::yy_destroy_ (const char* yymsg, basic_symbol<Base>& yysym) const
+  ParserClass::yy_destroy_ (const char* yymsg, basic_symbol<Base>& yysym) const
   {
     if (yymsg)
       YY_SYMBOL_PRINT (yymsg, yysym);
-
-    // User destructor.
-    YY_USE (yysym.kind ());
   }
 
 #if YYDEBUG
   template <typename Base>
   void
-  Parser::yy_print_ (std::ostream& yyo, const basic_symbol<Base>& yysym) const
+  ParserClass::yy_print_ (std::ostream& yyo, const basic_symbol<Base>& yysym) const
   {
     std::ostream& yyoutput = yyo;
     YY_USE (yyoutput);
@@ -358,7 +447,7 @@ namespace Parser {
 #endif
 
   void
-  Parser::yypush_ (const char* m, YY_MOVE_REF (stack_symbol_type) sym)
+  ParserClass::yypush_ (const char* m, YY_MOVE_REF (stack_symbol_type) sym)
   {
     if (m)
       YY_SYMBOL_PRINT (m, sym);
@@ -366,7 +455,7 @@ namespace Parser {
   }
 
   void
-  Parser::yypush_ (const char* m, state_type s, YY_MOVE_REF (symbol_type) sym)
+  ParserClass::yypush_ (const char* m, state_type s, YY_MOVE_REF (symbol_type) sym)
   {
 #if 201103L <= YY_CPLUSPLUS
     yypush_ (m, stack_symbol_type (s, std::move (sym)));
@@ -377,40 +466,40 @@ namespace Parser {
   }
 
   void
-  Parser::yypop_ (int n) YY_NOEXCEPT
+  ParserClass::yypop_ (int n) YY_NOEXCEPT
   {
     yystack_.pop (n);
   }
 
 #if YYDEBUG
   std::ostream&
-  Parser::debug_stream () const
+  ParserClass::debug_stream () const
   {
     return *yycdebug_;
   }
 
   void
-  Parser::set_debug_stream (std::ostream& o)
+  ParserClass::set_debug_stream (std::ostream& o)
   {
     yycdebug_ = &o;
   }
 
 
-  Parser::debug_level_type
-  Parser::debug_level () const
+  ParserClass::debug_level_type
+  ParserClass::debug_level () const
   {
     return yydebug_;
   }
 
   void
-  Parser::set_debug_level (debug_level_type l)
+  ParserClass::set_debug_level (debug_level_type l)
   {
     yydebug_ = l;
   }
 #endif // YYDEBUG
 
-  Parser::state_type
-  Parser::yy_lr_goto_state_ (state_type yystate, int yysym)
+  ParserClass::state_type
+  ParserClass::yy_lr_goto_state_ (state_type yystate, int yysym)
   {
     int yyr = yypgoto_[yysym - YYNTOKENS] + yystate;
     if (0 <= yyr && yyr <= yylast_ && yycheck_[yyr] == yystate)
@@ -420,25 +509,25 @@ namespace Parser {
   }
 
   bool
-  Parser::yy_pact_value_is_default_ (int yyvalue) YY_NOEXCEPT
+  ParserClass::yy_pact_value_is_default_ (int yyvalue) YY_NOEXCEPT
   {
     return yyvalue == yypact_ninf_;
   }
 
   bool
-  Parser::yy_table_value_is_error_ (int yyvalue) YY_NOEXCEPT
+  ParserClass::yy_table_value_is_error_ (int yyvalue) YY_NOEXCEPT
   {
     return yyvalue == yytable_ninf_;
   }
 
   int
-  Parser::operator() ()
+  ParserClass::operator() ()
   {
     return parse ();
   }
 
   int
-  Parser::parse ()
+  ParserClass::parse ()
   {
     int yyn;
     /// Length of the RHS of the rule being reduced.
@@ -499,7 +588,8 @@ namespace Parser {
         try
 #endif // YY_EXCEPTIONS
           {
-            yyla.kind_ = yytranslate_ (yylex (&yyla.value));
+            symbol_type yylookahead (yylex ());
+            yyla.move (yylookahead);
           }
 #if YY_EXCEPTIONS
         catch (const syntax_error& yyexc)
@@ -567,16 +657,57 @@ namespace Parser {
     {
       stack_symbol_type yylhs;
       yylhs.state = yy_lr_goto_state_ (yystack_[yylen].state, yyr1_[yyn]);
-      /* If YYLEN is nonzero, implement the default value of the
-         action: '$$ = $1'.  Otherwise, use the top of the stack.
+      /* Variants are always initialized to an empty instance of the
+         correct type. The default '$$ = $1' action is NOT applied
+         when using variants.  */
+      switch (yyr1_[yyn])
+    {
+      case symbol_kind::S_program: // program
+      case symbol_kind::S_statement: // statement
+      case symbol_kind::S_assignment: // assignment
+      case symbol_kind::S_function_call: // function_call
+      case symbol_kind::S_variable_declaration: // variable_declaration
+      case symbol_kind::S_constant_declaration: // constant_declaration
+      case symbol_kind::S_array_declaration: // array_declaration
+      case symbol_kind::S_array_extension: // array_extension
+      case symbol_kind::S_increment: // increment
+      case symbol_kind::S_decrement: // decrement
+      case symbol_kind::S_loop: // loop
+      case symbol_kind::S_conditional: // conditional
+      case symbol_kind::S_function_declaration: // function_declaration
+      case symbol_kind::S_robot_operation: // robot_operation
+      case symbol_kind::S_group_of_statements: // group_of_statements
+      case symbol_kind::S_expression: // expression
+      case symbol_kind::S_array_access: // array_access
+      case symbol_kind::S_movement_operator: // movement_operator
+      case symbol_kind::S_sensor_operator: // sensor_operator
+        yylhs.value.emplace< ASTNode* > ();
+        break;
 
-         Otherwise, the following line sets YYLHS.VALUE to garbage.
-         This behavior is undocumented and Bison users should not rely
-         upon it.  */
-      if (yylen)
-        yylhs.value = yystack_[yylen - 1].value;
-      else
-        yylhs.value = yystack_[0].value;
+      case symbol_kind::S_BOOL_CONST: // BOOL_CONST
+        yylhs.value.emplace< bool > ();
+        break;
+
+      case symbol_kind::S_UNSIGNED_INT: // UNSIGNED_INT
+        yylhs.value.emplace< int > ();
+        break;
+
+      case symbol_kind::S_IDENTIFIER: // IDENTIFIER
+        yylhs.value.emplace< std::string > ();
+        break;
+
+      case symbol_kind::S_statements: // statements
+      case symbol_kind::S_expressions: // expressions
+      case symbol_kind::S_return_variables: // return_variables
+      case symbol_kind::S_parameters: // parameters
+      case symbol_kind::S_variables: // variables
+        yylhs.value.emplace< std::vector<ASTNode*>* > ();
+        break;
+
+      default:
+        break;
+    }
+
 
 
       // Perform the reduction.
@@ -588,556 +719,557 @@ namespace Parser {
           switch (yyn)
             {
   case 2: // program: %empty
-#line 79 "parser.y"
+#line 63 "parser.y"
         {
-            (yylhs.value.node) = new BlockNode(new std::vector<ASTNode*>());
+            yylhs.value.as < ASTNode* > () = new BlockNode(new std::vector<ASTNode*>());
+            ast_root = yylhs.value.as < ASTNode* > ();
         }
-#line 596 "parser.cpp"
+#line 728 "parser.cpp"
     break;
 
   case 3: // program: program statement
-#line 83 "parser.y"
+#line 68 "parser.y"
         {
-            static_cast<BlockNode*>((yystack_[1].value.node))->addStatement((yystack_[0].value.node));
-            (yylhs.value.node) = (yystack_[1].value.node);
+            static_cast<BlockNode*>(yystack_[1].value.as < ASTNode* > ())->addStatement(yystack_[0].value.as < ASTNode* > ());
+            yylhs.value.as < ASTNode* > () = yystack_[1].value.as < ASTNode* > ();
         }
-#line 605 "parser.cpp"
+#line 737 "parser.cpp"
     break;
 
   case 4: // statement: variable_declaration
-#line 90 "parser.y"
-    { (yylhs.value.node) = (yystack_[0].value.node); }
-#line 611 "parser.cpp"
+#line 75 "parser.y"
+    { yylhs.value.as < ASTNode* > () = yystack_[0].value.as < ASTNode* > (); }
+#line 743 "parser.cpp"
     break;
 
   case 5: // statement: constant_declaration
-#line 91 "parser.y"
-      { (yylhs.value.node) = (yystack_[0].value.node); }
-#line 617 "parser.cpp"
+#line 76 "parser.y"
+      { yylhs.value.as < ASTNode* > () = yystack_[0].value.as < ASTNode* > (); }
+#line 749 "parser.cpp"
     break;
 
   case 6: // statement: array_declaration
-#line 92 "parser.y"
-      { (yylhs.value.node) = (yystack_[0].value.node); }
-#line 623 "parser.cpp"
-    break;
-
-  case 7: // statement: array_extension
-#line 93 "parser.y"
-      { (yylhs.value.node) = (yystack_[0].value.node); }
-#line 629 "parser.cpp"
-    break;
-
-  case 8: // statement: assignment
-#line 94 "parser.y"
-      { (yylhs.value.node) = (yystack_[0].value.node); }
-#line 635 "parser.cpp"
-    break;
-
-  case 9: // statement: function_call
-#line 95 "parser.y"
-      { (yylhs.value.node) = (yystack_[0].value.node); }
-#line 641 "parser.cpp"
-    break;
-
-  case 10: // statement: increment
-#line 96 "parser.y"
-      { (yylhs.value.node) = (yystack_[0].value.node); }
-#line 647 "parser.cpp"
-    break;
-
-  case 11: // statement: decrement
-#line 97 "parser.y"
-      { (yylhs.value.node) = (yystack_[0].value.node); }
-#line 653 "parser.cpp"
-    break;
-
-  case 12: // statement: loop
-#line 98 "parser.y"
-      { (yylhs.value.node) = (yystack_[0].value.node); }
-#line 659 "parser.cpp"
-    break;
-
-  case 13: // statement: conditional
-#line 99 "parser.y"
-      { (yylhs.value.node) = (yystack_[0].value.node); }
-#line 665 "parser.cpp"
-    break;
-
-  case 14: // statement: function_declaration
-#line 100 "parser.y"
-      { (yylhs.value.node) = (yystack_[0].value.node); }
-#line 671 "parser.cpp"
-    break;
-
-  case 15: // statement: robot_operation
-#line 101 "parser.y"
-      { (yylhs.value.node) = (yystack_[0].value.node); }
-#line 677 "parser.cpp"
-    break;
-
-  case 16: // statement: group_of_statements
-#line 102 "parser.y"
-      { (yylhs.value.node) = (yystack_[0].value.node); }
-#line 683 "parser.cpp"
-    break;
-
-  case 17: // assignment: IDENTIFIER ASSIGN expression SEMICOLON
-#line 107 "parser.y"
-        {
-            (yylhs.value.node) = new AssignmentNode(std::string((yystack_[3].value.id)), (yystack_[1].value.node));
-        }
-#line 691 "parser.cpp"
-    break;
-
-  case 18: // assignment: array_access ASSIGN expression SEMICOLON
-#line 111 "parser.y"
-        {
-            (yylhs.value.node) = new ArrayAssignmentNode((yystack_[3].value.node), (yystack_[1].value.node));
-        }
-#line 699 "parser.cpp"
-    break;
-
-  case 19: // function_call: IDENTIFIER LPAREN expressions RPAREN SEMICOLON
-#line 118 "parser.y"
-        {
-            (yylhs.value.node) = new FunctionCallNode(std::string((yystack_[4].value.id)), (yystack_[2].value.expr_list));
-        }
-#line 707 "parser.cpp"
-    break;
-
-  case 20: // variable_declaration: UINT IDENTIFIER ASSIGN expression SEMICOLON
-#line 125 "parser.y"
-        {
-            (yylhs.value.node) = new VarDeclarationNode(std::string((yystack_[3].value.id)), VarType::UINT, (yystack_[1].value.node));
-        }
-#line 715 "parser.cpp"
-    break;
-
-  case 21: // variable_declaration: BOOLEAN IDENTIFIER ASSIGN expression SEMICOLON
-#line 129 "parser.y"
-        {
-            (yylhs.value.node) = new VarDeclarationNode(std::string((yystack_[3].value.id)), VarType::BOOLEAN, (yystack_[1].value.node));
-        }
-#line 723 "parser.cpp"
-    break;
-
-  case 22: // constant_declaration: CUINT IDENTIFIER ASSIGN expression SEMICOLON
-#line 136 "parser.y"
-        {
-            (yylhs.value.node) = new ConstDeclarationNode(std::string((yystack_[3].value.id)), VarType::UINT, (yystack_[1].value.node));
-        }
-#line 731 "parser.cpp"
-    break;
-
-  case 23: // constant_declaration: CBOOLEAN IDENTIFIER ASSIGN expression SEMICOLON
-#line 140 "parser.y"
-        {
-            (yylhs.value.node) = new ConstDeclarationNode(std::string((yystack_[3].value.id)), VarType::BOOLEAN, (yystack_[1].value.node));
-        }
-#line 739 "parser.cpp"
-    break;
-
-  case 24: // array_declaration: ARRAY1DBOOL IDENTIFIER ASSIGN LBRACKET expressions RBRACKET SEMICOLON
-#line 147 "parser.y"
-        {
-            (yylhs.value.node) = new ArrayDeclarationNode(std::string((yystack_[5].value.id)), VarType::BOOLEAN, 1, (yystack_[2].value.expr_list));
-        }
-#line 747 "parser.cpp"
-    break;
-
-  case 25: // array_declaration: ARRAY2DBOOL IDENTIFIER ASSIGN LBRACKET expressions RBRACKET SEMICOLON
-#line 151 "parser.y"
-        {
-            (yylhs.value.node) = new ArrayDeclarationNode(std::string((yystack_[5].value.id)), VarType::BOOLEAN, 2, (yystack_[2].value.expr_list));
-        }
+#line 77 "parser.y"
+      { yylhs.value.as < ASTNode* > () = yystack_[0].value.as < ASTNode* > (); }
 #line 755 "parser.cpp"
     break;
 
-  case 26: // array_declaration: ARRAY1DUINT IDENTIFIER ASSIGN LBRACKET expressions RBRACKET SEMICOLON
-#line 155 "parser.y"
-        {
-            (yylhs.value.node) = new ArrayDeclarationNode(std::string((yystack_[5].value.id)), VarType::UINT, 1, (yystack_[2].value.expr_list));
-        }
-#line 763 "parser.cpp"
+  case 7: // statement: array_extension
+#line 78 "parser.y"
+      { yylhs.value.as < ASTNode* > () = yystack_[0].value.as < ASTNode* > (); }
+#line 761 "parser.cpp"
     break;
 
-  case 27: // array_declaration: ARRAY2DUINT IDENTIFIER ASSIGN LBRACKET expressions RBRACKET SEMICOLON
-#line 159 "parser.y"
-        {
-            (yylhs.value.node) = new ArrayDeclarationNode(std::string((yystack_[5].value.id)), VarType::UINT, 2, (yystack_[2].value.expr_list));
-        }
-#line 771 "parser.cpp"
+  case 8: // statement: assignment
+#line 79 "parser.y"
+      { yylhs.value.as < ASTNode* > () = yystack_[0].value.as < ASTNode* > (); }
+#line 767 "parser.cpp"
     break;
 
-  case 28: // array_extension: EXTEND1 IDENTIFIER expression SEMICOLON
-#line 166 "parser.y"
-        {
-            (yylhs.value.node) = new ArrayExtensionNode(std::string((yystack_[2].value.id)), 1, (yystack_[1].value.node));
-        }
+  case 9: // statement: function_call
+#line 80 "parser.y"
+      { yylhs.value.as < ASTNode* > () = yystack_[0].value.as < ASTNode* > (); }
+#line 773 "parser.cpp"
+    break;
+
+  case 10: // statement: increment
+#line 81 "parser.y"
+      { yylhs.value.as < ASTNode* > () = yystack_[0].value.as < ASTNode* > (); }
 #line 779 "parser.cpp"
     break;
 
-  case 29: // array_extension: EXTEND2 IDENTIFIER expression COMMA expression SEMICOLON
-#line 170 "parser.y"
-        {
-            (yylhs.value.node) = new ArrayExtensionNode(std::string((yystack_[4].value.id)), 2, (yystack_[3].value.node), (yystack_[1].value.node));
-        }
-#line 787 "parser.cpp"
+  case 11: // statement: decrement
+#line 82 "parser.y"
+      { yylhs.value.as < ASTNode* > () = yystack_[0].value.as < ASTNode* > (); }
+#line 785 "parser.cpp"
     break;
 
-  case 30: // increment: INC IDENTIFIER SEMICOLON
-#line 177 "parser.y"
-        {
-            (yylhs.value.node) = new IncDecNode(std::string((yystack_[1].value.id)), 1);
-        }
-#line 795 "parser.cpp"
+  case 12: // statement: loop
+#line 83 "parser.y"
+      { yylhs.value.as < ASTNode* > () = yystack_[0].value.as < ASTNode* > (); }
+#line 791 "parser.cpp"
     break;
 
-  case 31: // decrement: DEC IDENTIFIER SEMICOLON
-#line 184 "parser.y"
-        {
-            (yylhs.value.node) = new IncDecNode(std::string((yystack_[1].value.id)), -1);
-        }
+  case 13: // statement: conditional
+#line 84 "parser.y"
+      { yylhs.value.as < ASTNode* > () = yystack_[0].value.as < ASTNode* > (); }
+#line 797 "parser.cpp"
+    break;
+
+  case 14: // statement: function_declaration
+#line 85 "parser.y"
+      { yylhs.value.as < ASTNode* > () = yystack_[0].value.as < ASTNode* > (); }
 #line 803 "parser.cpp"
     break;
 
-  case 32: // loop: WHILE LPAREN expression RPAREN DO group_of_statements
-#line 191 "parser.y"
+  case 15: // statement: robot_operation
+#line 86 "parser.y"
+      { yylhs.value.as < ASTNode* > () = yystack_[0].value.as < ASTNode* > (); }
+#line 809 "parser.cpp"
+    break;
+
+  case 16: // statement: group_of_statements
+#line 87 "parser.y"
+      { yylhs.value.as < ASTNode* > () = yystack_[0].value.as < ASTNode* > (); }
+#line 815 "parser.cpp"
+    break;
+
+  case 17: // assignment: IDENTIFIER ASSIGN expression SEMICOLON
+#line 92 "parser.y"
         {
-            (yylhs.value.node) = new WhileNode((yystack_[3].value.node), (yystack_[0].value.node));
+            yylhs.value.as < ASTNode* > () = new AssignmentNode(yystack_[3].value.as < std::string > (), yystack_[1].value.as < ASTNode* > ());
         }
-#line 811 "parser.cpp"
+#line 823 "parser.cpp"
     break;
 
-  case 33: // conditional: IF LPAREN expression RPAREN group_of_statements
-#line 198 "parser.y"
+  case 18: // assignment: array_access ASSIGN expression SEMICOLON
+#line 96 "parser.y"
         {
-            (yylhs.value.node) = new IfNode((yystack_[2].value.node), (yystack_[0].value.node));
+            yylhs.value.as < ASTNode* > () = new ArrayAssignmentNode(yystack_[3].value.as < ASTNode* > (), yystack_[1].value.as < ASTNode* > ());
         }
-#line 819 "parser.cpp"
+#line 831 "parser.cpp"
     break;
 
-  case 34: // conditional: IF LPAREN expression RPAREN group_of_statements ELSE group_of_statements
-#line 202 "parser.y"
+  case 19: // function_call: IDENTIFIER LPAREN expressions RPAREN SEMICOLON
+#line 103 "parser.y"
         {
-            (yylhs.value.node) = new IfNode((yystack_[4].value.node), (yystack_[2].value.node), (yystack_[0].value.node));
+            yylhs.value.as < ASTNode* > () = new FunctionCallNode(yystack_[4].value.as < std::string > (), yystack_[2].value.as < std::vector<ASTNode*>* > ());
         }
-#line 827 "parser.cpp"
+#line 839 "parser.cpp"
     break;
 
-  case 35: // function_declaration: return_variables FUNCTION IDENTIFIER LPAREN parameters RPAREN group_of_statements
-#line 209 "parser.y"
+  case 20: // variable_declaration: UINT IDENTIFIER ASSIGN expression SEMICOLON
+#line 110 "parser.y"
         {
-            (yylhs.value.node) = new FunctionDeclarationNode(std::string((yystack_[4].value.id)), (yystack_[6].value.var_list), (yystack_[2].value.var_list), (yystack_[0].value.node));
+            yylhs.value.as < ASTNode* > () = new VarDeclarationNode(yystack_[3].value.as < std::string > (), VarType::UINT, yystack_[1].value.as < ASTNode* > ());
         }
-#line 835 "parser.cpp"
-    break;
-
-  case 36: // robot_operation: movement_operator SEMICOLON
-#line 216 "parser.y"
-        { (yylhs.value.node) = new RobotOperationNode((yystack_[1].value.node)); }
-#line 841 "parser.cpp"
-    break;
-
-  case 37: // robot_operation: sensor_operator SEMICOLON
-#line 218 "parser.y"
-        { (yylhs.value.node) = new RobotOperationNode((yystack_[1].value.node)); }
 #line 847 "parser.cpp"
     break;
 
-  case 38: // group_of_statements: LBRACE statements RBRACE
-#line 223 "parser.y"
+  case 21: // variable_declaration: BOOLEAN IDENTIFIER ASSIGN expression SEMICOLON
+#line 114 "parser.y"
         {
-            (yylhs.value.node) = new BlockNode((yystack_[1].value.node_list));
-            delete (yystack_[1].value.node_list);  // Clean up the vector as it's now encapsulated within BlockNode
+            yylhs.value.as < ASTNode* > () = new VarDeclarationNode(yystack_[3].value.as < std::string > (), VarType::BOOLEAN, yystack_[1].value.as < ASTNode* > ());
         }
-#line 856 "parser.cpp"
+#line 855 "parser.cpp"
+    break;
+
+  case 22: // constant_declaration: CUINT IDENTIFIER ASSIGN expression SEMICOLON
+#line 121 "parser.y"
+        {
+            yylhs.value.as < ASTNode* > () = new ConstDeclarationNode(yystack_[3].value.as < std::string > (), VarType::UINT, yystack_[1].value.as < ASTNode* > ());
+        }
+#line 863 "parser.cpp"
+    break;
+
+  case 23: // constant_declaration: CBOOLEAN IDENTIFIER ASSIGN expression SEMICOLON
+#line 125 "parser.y"
+        {
+            yylhs.value.as < ASTNode* > () = new ConstDeclarationNode(yystack_[3].value.as < std::string > (), VarType::BOOLEAN, yystack_[1].value.as < ASTNode* > ());
+        }
+#line 871 "parser.cpp"
+    break;
+
+  case 24: // array_declaration: ARRAY1DBOOL IDENTIFIER ASSIGN LBRACKET expressions RBRACKET SEMICOLON
+#line 132 "parser.y"
+        {
+            yylhs.value.as < ASTNode* > () = new ArrayDeclarationNode(yystack_[5].value.as < std::string > (), VarType::BOOLEAN, 1, yystack_[2].value.as < std::vector<ASTNode*>* > ());
+        }
+#line 879 "parser.cpp"
+    break;
+
+  case 25: // array_declaration: ARRAY2DBOOL IDENTIFIER ASSIGN LBRACKET expressions RBRACKET SEMICOLON
+#line 136 "parser.y"
+        {
+            yylhs.value.as < ASTNode* > () = new ArrayDeclarationNode(yystack_[5].value.as < std::string > (), VarType::BOOLEAN, 2, yystack_[2].value.as < std::vector<ASTNode*>* > ());
+        }
+#line 887 "parser.cpp"
+    break;
+
+  case 26: // array_declaration: ARRAY1DUINT IDENTIFIER ASSIGN LBRACKET expressions RBRACKET SEMICOLON
+#line 140 "parser.y"
+        {
+            yylhs.value.as < ASTNode* > () = new ArrayDeclarationNode(yystack_[5].value.as < std::string > (), VarType::UINT, 1, yystack_[2].value.as < std::vector<ASTNode*>* > ());
+        }
+#line 895 "parser.cpp"
+    break;
+
+  case 27: // array_declaration: ARRAY2DUINT IDENTIFIER ASSIGN LBRACKET expressions RBRACKET SEMICOLON
+#line 144 "parser.y"
+        {
+            yylhs.value.as < ASTNode* > () = new ArrayDeclarationNode(yystack_[5].value.as < std::string > (), VarType::UINT, 2, yystack_[2].value.as < std::vector<ASTNode*>* > ());
+        }
+#line 903 "parser.cpp"
+    break;
+
+  case 28: // array_extension: EXTEND1 IDENTIFIER expression SEMICOLON
+#line 151 "parser.y"
+        {
+            yylhs.value.as < ASTNode* > () = new ArrayExtensionNode(yystack_[2].value.as < std::string > (), 1, yystack_[1].value.as < ASTNode* > (), nullptr);
+        }
+#line 911 "parser.cpp"
+    break;
+
+  case 29: // array_extension: EXTEND2 IDENTIFIER expression COMMA expression SEMICOLON
+#line 155 "parser.y"
+        {
+            yylhs.value.as < ASTNode* > () = new ArrayExtensionNode(yystack_[4].value.as < std::string > (), 2, yystack_[3].value.as < ASTNode* > (), yystack_[1].value.as < ASTNode* > ());
+        }
+#line 919 "parser.cpp"
+    break;
+
+  case 30: // increment: INC IDENTIFIER SEMICOLON
+#line 162 "parser.y"
+        {
+            yylhs.value.as < ASTNode* > () = new IncDecNode(yystack_[1].value.as < std::string > (), 1);
+        }
+#line 927 "parser.cpp"
+    break;
+
+  case 31: // decrement: DEC IDENTIFIER SEMICOLON
+#line 169 "parser.y"
+        {
+            yylhs.value.as < ASTNode* > () = new IncDecNode(yystack_[1].value.as < std::string > (), -1);
+        }
+#line 935 "parser.cpp"
+    break;
+
+  case 32: // loop: WHILE LPAREN expression RPAREN DO group_of_statements
+#line 176 "parser.y"
+        {
+            yylhs.value.as < ASTNode* > () = new WhileNode(yystack_[3].value.as < ASTNode* > (), yystack_[0].value.as < ASTNode* > ());
+        }
+#line 943 "parser.cpp"
+    break;
+
+  case 33: // conditional: IF LPAREN expression RPAREN group_of_statements
+#line 183 "parser.y"
+        {
+            yylhs.value.as < ASTNode* > () = new IfNode(yystack_[2].value.as < ASTNode* > (), yystack_[0].value.as < ASTNode* > ());
+        }
+#line 951 "parser.cpp"
+    break;
+
+  case 34: // conditional: IF LPAREN expression RPAREN group_of_statements ELSE group_of_statements
+#line 187 "parser.y"
+        {
+            yylhs.value.as < ASTNode* > () = new IfNode(yystack_[4].value.as < ASTNode* > (), yystack_[2].value.as < ASTNode* > (), yystack_[0].value.as < ASTNode* > ());
+        }
+#line 959 "parser.cpp"
+    break;
+
+  case 35: // function_declaration: return_variables FUNCTION IDENTIFIER LPAREN parameters RPAREN group_of_statements
+#line 194 "parser.y"
+        {
+            yylhs.value.as < ASTNode* > () = new FunctionDeclarationNode(yystack_[4].value.as < std::string > (), yystack_[6].value.as < std::vector<ASTNode*>* > (), yystack_[2].value.as < std::vector<ASTNode*>* > (), yystack_[0].value.as < ASTNode* > ());
+        }
+#line 967 "parser.cpp"
+    break;
+
+  case 36: // robot_operation: movement_operator SEMICOLON
+#line 201 "parser.y"
+        { yylhs.value.as < ASTNode* > () = new RobotOperationNode(yystack_[1].value.as < ASTNode* > ()); }
+#line 973 "parser.cpp"
+    break;
+
+  case 37: // robot_operation: sensor_operator SEMICOLON
+#line 203 "parser.y"
+        { yylhs.value.as < ASTNode* > () = new RobotOperationNode(yystack_[1].value.as < ASTNode* > ()); }
+#line 979 "parser.cpp"
+    break;
+
+  case 38: // group_of_statements: LBRACE statements RBRACE
+#line 208 "parser.y"
+        {
+            yylhs.value.as < ASTNode* > () = new BlockNode(yystack_[1].value.as < std::vector<ASTNode*>* > ());
+            delete yystack_[1].value.as < std::vector<ASTNode*>* > (); // Clean up the vector as it's now encapsulated within BlockNode
+        }
+#line 988 "parser.cpp"
     break;
 
   case 39: // statements: %empty
-#line 231 "parser.y"
+#line 216 "parser.y"
         {
-            (yylhs.value.node_list) = new std::vector<ASTNode*>();
+            yylhs.value.as < std::vector<ASTNode*>* > () = new std::vector<ASTNode*>();
         }
-#line 864 "parser.cpp"
+#line 996 "parser.cpp"
     break;
 
   case 40: // statements: statements statement
-#line 235 "parser.y"
+#line 220 "parser.y"
         {
-            (yystack_[1].value.node_list)->push_back((yystack_[0].value.node));
-            (yylhs.value.node_list) = (yystack_[1].value.node_list);
+            yystack_[1].value.as < std::vector<ASTNode*>* > ()->push_back(yystack_[0].value.as < ASTNode* > ());
+            yylhs.value.as < std::vector<ASTNode*>* > () = yystack_[1].value.as < std::vector<ASTNode*>* > ();
         }
-#line 873 "parser.cpp"
+#line 1005 "parser.cpp"
     break;
 
   case 41: // expression: expression OR expression
-#line 243 "parser.y"
+#line 228 "parser.y"
         {
-            (yylhs.value.node) = new LogicalOpNode('O', (yystack_[2].value.node), (yystack_[0].value.node));
+            yylhs.value.as < ASTNode* > () = new LogicalOpNode('O', yystack_[2].value.as < ASTNode* > (), yystack_[0].value.as < ASTNode* > ());
         }
-#line 881 "parser.cpp"
+#line 1013 "parser.cpp"
     break;
 
   case 42: // expression: NOT expression
-#line 247 "parser.y"
+#line 232 "parser.y"
         {
-            (yylhs.value.node) = new LogicalOpNode('N', (yystack_[0].value.node));
+            yylhs.value.as < ASTNode* > () = new LogicalOpNode('N', yystack_[0].value.as < ASTNode* > (), nullptr);
         }
-#line 889 "parser.cpp"
+#line 1021 "parser.cpp"
     break;
 
   case 43: // expression: expression GT expression
-#line 251 "parser.y"
+#line 236 "parser.y"
         {
-            (yylhs.value.node) = new ComparisonNode('G', (yystack_[2].value.node), (yystack_[0].value.node));
+            yylhs.value.as < ASTNode* > () = new ComparisonNode('G', yystack_[2].value.as < ASTNode* > (), yystack_[0].value.as < ASTNode* > ());
         }
-#line 897 "parser.cpp"
-    break;
-
-  case 44: // expression: expression LT expression
-#line 255 "parser.y"
-        {
-            (yylhs.value.node) = new ComparisonNode('L', (yystack_[2].value.node), (yystack_[0].value.node));
-        }
-#line 905 "parser.cpp"
-    break;
-
-  case 45: // expression: expression PLUS expression
-#line 259 "parser.y"
-        {
-            (yylhs.value.node) = new ArithmeticOpNode('+', (yystack_[2].value.node), (yystack_[0].value.node));
-        }
-#line 913 "parser.cpp"
-    break;
-
-  case 46: // expression: expression MINUS expression
-#line 263 "parser.y"
-        {
-            (yylhs.value.node) = new ArithmeticOpNode('-', (yystack_[2].value.node), (yystack_[0].value.node));
-        }
-#line 921 "parser.cpp"
-    break;
-
-  case 47: // expression: expression MULTIPLY expression
-#line 267 "parser.y"
-        {
-            (yylhs.value.node) = new ArithmeticOpNode('*', (yystack_[2].value.node), (yystack_[0].value.node));
-        }
-#line 929 "parser.cpp"
-    break;
-
-  case 48: // expression: expression DIVIDE expression
-#line 271 "parser.y"
-        {
-            (yylhs.value.node) = new ArithmeticOpNode('/', (yystack_[2].value.node), (yystack_[0].value.node));
-        }
-#line 937 "parser.cpp"
-    break;
-
-  case 49: // expression: expression MODULO expression
-#line 275 "parser.y"
-        {
-            (yylhs.value.node) = new ArithmeticOpNode('%', (yystack_[2].value.node), (yystack_[0].value.node));
-        }
-#line 945 "parser.cpp"
-    break;
-
-  case 50: // expression: LPAREN expression RPAREN
-#line 279 "parser.y"
-        {
-            (yylhs.value.node) = (yystack_[1].value.node);
-        }
-#line 953 "parser.cpp"
-    break;
-
-  case 51: // expression: UNSIGNED_INT
-#line 283 "parser.y"
-        {
-            (yylhs.value.node) = new IntNode((yystack_[0].value.int_val));
-        }
-#line 961 "parser.cpp"
-    break;
-
-  case 52: // expression: BOOL_CONST
-#line 287 "parser.y"
-        {
-            (yylhs.value.node) = new BoolNode((yystack_[0].value.bool_val));
-        }
-#line 969 "parser.cpp"
-    break;
-
-  case 53: // expression: IDENTIFIER
-#line 291 "parser.y"
-        {
-            (yylhs.value.node) = new VariableNode(std::string((yystack_[0].value.id)));
-        }
-#line 977 "parser.cpp"
-    break;
-
-  case 54: // expression: array_access
-#line 295 "parser.y"
-        {
-            (yylhs.value.node) = (yystack_[0].value.node);
-        }
-#line 985 "parser.cpp"
-    break;
-
-  case 55: // array_access: IDENTIFIER LPAREN expressions RPAREN
-#line 302 "parser.y"
-        {
-            (yylhs.value.node) = new ArrayAccessNode(std::string((yystack_[3].value.id)), (yystack_[1].value.expr_list));
-        }
-#line 993 "parser.cpp"
-    break;
-
-  case 56: // expressions: expression
-#line 309 "parser.y"
-        {
-            (yylhs.value.expr_list) = new std::vector<ASTNode*>();
-            (yylhs.value.expr_list)->push_back((yystack_[0].value.node));
-        }
-#line 1002 "parser.cpp"
-    break;
-
-  case 57: // expressions: expressions COMMA expression
-#line 314 "parser.y"
-        {
-            (yystack_[2].value.expr_list)->push_back((yystack_[0].value.node));
-            (yylhs.value.expr_list) = (yystack_[2].value.expr_list);
-        }
-#line 1011 "parser.cpp"
-    break;
-
-  case 58: // expressions: %empty
-#line 319 "parser.y"
-        { (yylhs.value.expr_list) = new std::vector<ASTNode*>(); }
-#line 1017 "parser.cpp"
-    break;
-
-  case 59: // return_variables: LBRACKET variables RBRACKET
-#line 324 "parser.y"
-        { (yylhs.value.var_list) = (yystack_[1].value.var_list); }
-#line 1023 "parser.cpp"
-    break;
-
-  case 60: // return_variables: variables
-#line 326 "parser.y"
-        { (yylhs.value.var_list) = (yystack_[0].value.var_list); }
 #line 1029 "parser.cpp"
     break;
 
-  case 61: // parameters: variables
-#line 331 "parser.y"
-        { (yylhs.value.var_list) = (yystack_[0].value.var_list); }
-#line 1035 "parser.cpp"
-    break;
-
-  case 62: // parameters: %empty
-#line 333 "parser.y"
-        { (yylhs.value.var_list) = new std::vector<VariableNode*>(); }
-#line 1041 "parser.cpp"
-    break;
-
-  case 63: // variables: IDENTIFIER
-#line 338 "parser.y"
+  case 44: // expression: expression LT expression
+#line 240 "parser.y"
         {
-            (yylhs.value.var_list) = new std::vector<VariableNode*>();
-            (yylhs.value.var_list)->push_back(new VariableNode(std::string((yystack_[0].value.id))));
+            yylhs.value.as < ASTNode* > () = new ComparisonNode('L', yystack_[2].value.as < ASTNode* > (), yystack_[0].value.as < ASTNode* > ());
         }
-#line 1050 "parser.cpp"
+#line 1037 "parser.cpp"
     break;
 
-  case 64: // variables: variables COMMA IDENTIFIER
-#line 343 "parser.y"
+  case 45: // expression: expression PLUS expression
+#line 244 "parser.y"
         {
-            (yystack_[2].value.var_list)->push_back(new VariableNode(std::string((yystack_[0].value.id))));
-            (yylhs.value.var_list) = (yystack_[2].value.var_list);
+            yylhs.value.as < ASTNode* > () = new ArithmeticOpNode('+', yystack_[2].value.as < ASTNode* > (), yystack_[0].value.as < ASTNode* > ());
         }
-#line 1059 "parser.cpp"
+#line 1045 "parser.cpp"
     break;
 
-  case 65: // movement_operator: FORW
-#line 351 "parser.y"
-        { (yylhs.value.node) = new MovementNode("FORW"); }
-#line 1065 "parser.cpp"
+  case 46: // expression: expression MINUS expression
+#line 248 "parser.y"
+        {
+            yylhs.value.as < ASTNode* > () = new ArithmeticOpNode('-', yystack_[2].value.as < ASTNode* > (), yystack_[0].value.as < ASTNode* > ());
+        }
+#line 1053 "parser.cpp"
     break;
 
-  case 66: // movement_operator: BACK
-#line 353 "parser.y"
-        { (yylhs.value.node) = new MovementNode("BACK"); }
-#line 1071 "parser.cpp"
+  case 47: // expression: expression MULTIPLY expression
+#line 252 "parser.y"
+        {
+            yylhs.value.as < ASTNode* > () = new ArithmeticOpNode('*', yystack_[2].value.as < ASTNode* > (), yystack_[0].value.as < ASTNode* > ());
+        }
+#line 1061 "parser.cpp"
     break;
 
-  case 67: // movement_operator: RIGHT_OP
-#line 355 "parser.y"
-        { (yylhs.value.node) = new MovementNode("RIGHT"); }
+  case 48: // expression: expression DIVIDE expression
+#line 256 "parser.y"
+        {
+            yylhs.value.as < ASTNode* > () = new ArithmeticOpNode('/', yystack_[2].value.as < ASTNode* > (), yystack_[0].value.as < ASTNode* > ());
+        }
+#line 1069 "parser.cpp"
+    break;
+
+  case 49: // expression: expression MODULO expression
+#line 260 "parser.y"
+        {
+            yylhs.value.as < ASTNode* > () = new ArithmeticOpNode('%', yystack_[2].value.as < ASTNode* > (), yystack_[0].value.as < ASTNode* > ());
+        }
 #line 1077 "parser.cpp"
     break;
 
-  case 68: // movement_operator: LEFT_OP
-#line 357 "parser.y"
-        { (yylhs.value.node) = new MovementNode("LEFT"); }
-#line 1083 "parser.cpp"
+  case 50: // expression: LPAREN expression RPAREN
+#line 264 "parser.y"
+        {
+            yylhs.value.as < ASTNode* > () = yystack_[1].value.as < ASTNode* > ();
+        }
+#line 1085 "parser.cpp"
     break;
 
-  case 69: // sensor_operator: GETF
-#line 362 "parser.y"
-        { (yylhs.value.node) = new SensorNode("GETF"); }
-#line 1089 "parser.cpp"
+  case 51: // expression: UNSIGNED_INT
+#line 268 "parser.y"
+        {
+            yylhs.value.as < ASTNode* > () = new IntNode(yystack_[0].value.as < int > ());
+        }
+#line 1093 "parser.cpp"
     break;
 
-  case 70: // sensor_operator: GETB
-#line 364 "parser.y"
-        { (yylhs.value.node) = new SensorNode("GETB"); }
-#line 1095 "parser.cpp"
-    break;
-
-  case 71: // sensor_operator: GETR
-#line 366 "parser.y"
-        { (yylhs.value.node) = new SensorNode("GETR"); }
+  case 52: // expression: BOOL_CONST
+#line 272 "parser.y"
+        {
+            yylhs.value.as < ASTNode* > () = new BoolNode(yystack_[0].value.as < bool > ());
+        }
 #line 1101 "parser.cpp"
     break;
 
-  case 72: // sensor_operator: GETL
-#line 368 "parser.y"
-        { (yylhs.value.node) = new SensorNode("GETL"); }
-#line 1107 "parser.cpp"
+  case 53: // expression: IDENTIFIER
+#line 276 "parser.y"
+        {
+            yylhs.value.as < ASTNode* > () = new VariableNode(yystack_[0].value.as < std::string > ());
+        }
+#line 1109 "parser.cpp"
     break;
 
-  case 73: // sensor_operator: PUSHF
-#line 370 "parser.y"
-        { (yylhs.value.node) = new SensorNode("PUSHF"); }
-#line 1113 "parser.cpp"
+  case 54: // expression: array_access
+#line 280 "parser.y"
+        {
+            yylhs.value.as < ASTNode* > () = yystack_[0].value.as < ASTNode* > ();
+        }
+#line 1117 "parser.cpp"
     break;
 
-  case 74: // sensor_operator: PUSHB
-#line 372 "parser.y"
-        { (yylhs.value.node) = new SensorNode("PUSHB"); }
-#line 1119 "parser.cpp"
-    break;
-
-  case 75: // sensor_operator: PUSHR
-#line 374 "parser.y"
-        { (yylhs.value.node) = new SensorNode("PUSHR"); }
+  case 55: // array_access: IDENTIFIER LPAREN expressions RPAREN
+#line 287 "parser.y"
+        {
+            yylhs.value.as < ASTNode* > () = new ArrayAccessNode(yystack_[3].value.as < std::string > (), yystack_[1].value.as < std::vector<ASTNode*>* > ());
+        }
 #line 1125 "parser.cpp"
     break;
 
+  case 56: // expressions: expression
+#line 294 "parser.y"
+        {
+            yylhs.value.as < std::vector<ASTNode*>* > () = new std::vector<ASTNode*>();
+            yylhs.value.as < std::vector<ASTNode*>* > ()->push_back(yystack_[0].value.as < ASTNode* > ());
+        }
+#line 1134 "parser.cpp"
+    break;
+
+  case 57: // expressions: expressions COMMA expression
+#line 299 "parser.y"
+        {
+            yystack_[2].value.as < std::vector<ASTNode*>* > ()->push_back(yystack_[0].value.as < ASTNode* > ());
+            yylhs.value.as < std::vector<ASTNode*>* > () = yystack_[2].value.as < std::vector<ASTNode*>* > ();
+        }
+#line 1143 "parser.cpp"
+    break;
+
+  case 58: // expressions: %empty
+#line 304 "parser.y"
+        { yylhs.value.as < std::vector<ASTNode*>* > () = new std::vector<ASTNode*>(); }
+#line 1149 "parser.cpp"
+    break;
+
+  case 59: // return_variables: LBRACKET variables RBRACKET
+#line 309 "parser.y"
+        { yylhs.value.as < std::vector<ASTNode*>* > () = yystack_[1].value.as < std::vector<ASTNode*>* > (); }
+#line 1155 "parser.cpp"
+    break;
+
+  case 60: // return_variables: variables
+#line 311 "parser.y"
+        { yylhs.value.as < std::vector<ASTNode*>* > () = yystack_[0].value.as < std::vector<ASTNode*>* > (); }
+#line 1161 "parser.cpp"
+    break;
+
+  case 61: // parameters: variables
+#line 316 "parser.y"
+        { yylhs.value.as < std::vector<ASTNode*>* > () = yystack_[0].value.as < std::vector<ASTNode*>* > (); }
+#line 1167 "parser.cpp"
+    break;
+
+  case 62: // parameters: %empty
+#line 318 "parser.y"
+        { yylhs.value.as < std::vector<ASTNode*>* > () = new std::vector<ASTNode*>(); }
+#line 1173 "parser.cpp"
+    break;
+
+  case 63: // variables: IDENTIFIER
+#line 323 "parser.y"
+        {
+            yylhs.value.as < std::vector<ASTNode*>* > () = new std::vector<ASTNode*>();
+            yylhs.value.as < std::vector<ASTNode*>* > ()->push_back(new VariableNode(yystack_[0].value.as < std::string > ()));
+        }
+#line 1182 "parser.cpp"
+    break;
+
+  case 64: // variables: variables COMMA IDENTIFIER
+#line 328 "parser.y"
+        {
+            yystack_[2].value.as < std::vector<ASTNode*>* > ()->push_back(new VariableNode(yystack_[0].value.as < std::string > ()));
+            yylhs.value.as < std::vector<ASTNode*>* > () = yystack_[2].value.as < std::vector<ASTNode*>* > ();
+        }
+#line 1191 "parser.cpp"
+    break;
+
+  case 65: // movement_operator: FORW
+#line 336 "parser.y"
+        { yylhs.value.as < ASTNode* > () = new MovementNode("FORW"); }
+#line 1197 "parser.cpp"
+    break;
+
+  case 66: // movement_operator: BACK
+#line 338 "parser.y"
+        { yylhs.value.as < ASTNode* > () = new MovementNode("BACK"); }
+#line 1203 "parser.cpp"
+    break;
+
+  case 67: // movement_operator: RIGHT_OP
+#line 340 "parser.y"
+        { yylhs.value.as < ASTNode* > () = new MovementNode("RIGHT"); }
+#line 1209 "parser.cpp"
+    break;
+
+  case 68: // movement_operator: LEFT_OP
+#line 342 "parser.y"
+        { yylhs.value.as < ASTNode* > () = new MovementNode("LEFT"); }
+#line 1215 "parser.cpp"
+    break;
+
+  case 69: // sensor_operator: GETF
+#line 347 "parser.y"
+        { yylhs.value.as < ASTNode* > () = new SensorNode("GETF"); }
+#line 1221 "parser.cpp"
+    break;
+
+  case 70: // sensor_operator: GETB
+#line 349 "parser.y"
+        { yylhs.value.as < ASTNode* > () = new SensorNode("GETB"); }
+#line 1227 "parser.cpp"
+    break;
+
+  case 71: // sensor_operator: GETR
+#line 351 "parser.y"
+        { yylhs.value.as < ASTNode* > () = new SensorNode("GETR"); }
+#line 1233 "parser.cpp"
+    break;
+
+  case 72: // sensor_operator: GETL
+#line 353 "parser.y"
+        { yylhs.value.as < ASTNode* > () = new SensorNode("GETL"); }
+#line 1239 "parser.cpp"
+    break;
+
+  case 73: // sensor_operator: PUSHF
+#line 355 "parser.y"
+        { yylhs.value.as < ASTNode* > () = new SensorNode("PUSHF"); }
+#line 1245 "parser.cpp"
+    break;
+
+  case 74: // sensor_operator: PUSHB
+#line 357 "parser.y"
+        { yylhs.value.as < ASTNode* > () = new SensorNode("PUSHB"); }
+#line 1251 "parser.cpp"
+    break;
+
+  case 75: // sensor_operator: PUSHR
+#line 359 "parser.y"
+        { yylhs.value.as < ASTNode* > () = new SensorNode("PUSHR"); }
+#line 1257 "parser.cpp"
+    break;
+
   case 76: // sensor_operator: PUSHL
-#line 376 "parser.y"
-        { (yylhs.value.node) = new SensorNode("PUSHL"); }
-#line 1131 "parser.cpp"
+#line 361 "parser.y"
+        { yylhs.value.as < ASTNode* > () = new SensorNode("PUSHL"); }
+#line 1263 "parser.cpp"
     break;
 
   case 77: // sensor_operator: UNDO
-#line 378 "parser.y"
-        { (yylhs.value.node) = new SensorNode("UNDO"); }
-#line 1137 "parser.cpp"
+#line 363 "parser.y"
+        { yylhs.value.as < ASTNode* > () = new SensorNode("UNDO"); }
+#line 1269 "parser.cpp"
     break;
 
 
-#line 1141 "parser.cpp"
+#line 1273 "parser.cpp"
 
             default:
               break;
@@ -1305,14 +1437,14 @@ namespace Parser {
   }
 
   void
-  Parser::error (const syntax_error& yyexc)
+  ParserClass::error (const syntax_error& yyexc)
   {
     error (yyexc.what ());
   }
 
 #if YYDEBUG || 0
   const char *
-  Parser::symbol_name (symbol_kind_type yysymbol)
+  ParserClass::symbol_name (symbol_kind_type yysymbol)
   {
     return yytname_[yysymbol];
   }
@@ -1326,12 +1458,12 @@ namespace Parser {
 
 
 
-  const signed char Parser::yypact_ninf_ = -123;
+  const signed char ParserClass::yypact_ninf_ = -123;
 
-  const signed char Parser::yytable_ninf_ = -1;
+  const signed char ParserClass::yytable_ninf_ = -1;
 
   const short
-  Parser::yypact_[] =
+  ParserClass::yypact_[] =
   {
     -123,    67,  -123,    -2,     0,  -123,     9,    10,    20,    30,
       31,    48,    49,    51,    65,    69,    70,    71,    -3,    77,
@@ -1354,7 +1486,7 @@ namespace Parser {
   };
 
   const signed char
-  Parser::yydefact_[] =
+  ParserClass::yydefact_[] =
   {
        2,     0,     1,    63,     0,    39,     0,     0,     0,     0,
        0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
@@ -1377,7 +1509,7 @@ namespace Parser {
   };
 
   const short
-  Parser::yypgoto_[] =
+  ParserClass::yypgoto_[] =
   {
     -123,  -123,   145,  -123,  -123,  -123,  -123,  -123,  -123,  -123,
     -123,  -123,  -123,  -123,  -123,  -122,  -123,   -51,     1,  -102,
@@ -1385,7 +1517,7 @@ namespace Parser {
   };
 
   const unsigned char
-  Parser::yydefgoto_[] =
+  ParserClass::yydefgoto_[] =
   {
        0,     1,    33,    34,    35,    36,    37,    38,    39,    40,
       41,    42,    43,    44,    45,    46,    56,    83,    82,    84,
@@ -1393,7 +1525,7 @@ namespace Parser {
   };
 
   const unsigned char
-  Parser::yytable_[] =
+  ParserClass::yytable_[] =
   {
       55,    81,    47,   133,    52,    54,    69,    53,   155,   109,
      110,   111,   112,   113,    57,    58,    98,    99,   100,   101,
@@ -1432,7 +1564,7 @@ namespace Parser {
   };
 
   const short
-  Parser::yycheck_[] =
+  ParserClass::yycheck_[] =
   {
        4,    52,     1,   105,     6,     5,     9,     9,   130,    15,
       16,    17,    18,    19,     5,     5,    67,    68,    69,    70,
@@ -1471,7 +1603,7 @@ namespace Parser {
   };
 
   const signed char
-  Parser::yystos_[] =
+  ParserClass::yystos_[] =
   {
        0,    57,     0,     5,    11,    13,    20,    21,    26,    27,
       28,    29,    30,    31,    32,    33,    34,    35,    38,    40,
@@ -1494,7 +1626,7 @@ namespace Parser {
   };
 
   const signed char
-  Parser::yyr1_[] =
+  ParserClass::yyr1_[] =
   {
        0,    56,    57,    57,    58,    58,    58,    58,    58,    58,
       58,    58,    58,    58,    58,    58,    58,    59,    59,    60,
@@ -1507,7 +1639,7 @@ namespace Parser {
   };
 
   const signed char
-  Parser::yyr2_[] =
+  ParserClass::yyr2_[] =
   {
        0,     2,     0,     2,     1,     1,     1,     1,     1,     1,
        1,     1,     1,     1,     1,     1,     1,     4,     4,     5,
@@ -1524,7 +1656,7 @@ namespace Parser {
   // YYTNAME[SYMBOL-NUM] -- String name of the symbol SYMBOL-NUM.
   // First, the terminals, then, starting at \a YYNTOKENS, nonterminals.
   const char*
-  const Parser::yytname_[] =
+  const ParserClass::yytname_[] =
   {
   "\"end of file\"", "error", "\"invalid token\"", "UNSIGNED_INT",
   "BOOL_CONST", "IDENTIFIER", "ASSIGN", "SEMICOLON", "COMMA", "LPAREN",
@@ -1547,20 +1679,20 @@ namespace Parser {
 
 #if YYDEBUG
   const short
-  Parser::yyrline_[] =
+  ParserClass::yyrline_[] =
   {
-       0,    79,    79,    82,    90,    91,    92,    93,    94,    95,
-      96,    97,    98,    99,   100,   101,   102,   106,   110,   117,
-     124,   128,   135,   139,   146,   150,   154,   158,   165,   169,
-     176,   183,   190,   197,   201,   208,   215,   217,   222,   231,
-     234,   242,   246,   250,   254,   258,   262,   266,   270,   274,
-     278,   282,   286,   290,   294,   301,   308,   313,   319,   323,
-     325,   330,   333,   337,   342,   350,   352,   354,   356,   361,
-     363,   365,   367,   369,   371,   373,   375,   377
+       0,    63,    63,    67,    75,    76,    77,    78,    79,    80,
+      81,    82,    83,    84,    85,    86,    87,    91,    95,   102,
+     109,   113,   120,   124,   131,   135,   139,   143,   150,   154,
+     161,   168,   175,   182,   186,   193,   200,   202,   207,   216,
+     219,   227,   231,   235,   239,   243,   247,   251,   255,   259,
+     263,   267,   271,   275,   279,   286,   293,   298,   304,   308,
+     310,   315,   318,   322,   327,   335,   337,   339,   341,   346,
+     348,   350,   352,   354,   356,   358,   360,   362
   };
 
   void
-  Parser::yy_stack_print_ () const
+  ParserClass::yy_stack_print_ () const
   {
     *yycdebug_ << "Stack now";
     for (stack_type::const_iterator
@@ -1572,7 +1704,7 @@ namespace Parser {
   }
 
   void
-  Parser::yy_reduce_print_ (int yyrule) const
+  ParserClass::yy_reduce_print_ (int yyrule) const
   {
     int yylno = yyrline_[yyrule];
     int yynrhs = yyr2_[yyrule];
@@ -1586,69 +1718,15 @@ namespace Parser {
   }
 #endif // YYDEBUG
 
-  Parser::symbol_kind_type
-  Parser::yytranslate_ (int t) YY_NOEXCEPT
-  {
-    // YYTRANSLATE[TOKEN-NUM] -- Symbol number corresponding to
-    // TOKEN-NUM as returned by yylex.
-    static
-    const signed char
-    translate_table[] =
-    {
-       0,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,     2,     2,     2,     2,     2,     1,     2,     3,     4,
-       5,     6,     7,     8,     9,    10,    11,    12,    13,    14,
-      15,    16,    17,    18,    19,    20,    21,    22,    23,    24,
-      25,    26,    27,    28,    29,    30,    31,    32,    33,    34,
-      35,    36,    37,    38,    39,    40,    41,    42,    43,    44,
-      45,    46,    47,    48,    49,    50,    51,    52,    53,    54,
-      55
-    };
-    // Last valid token kind.
-    const int code_max = 310;
 
-    if (t <= 0)
-      return symbol_kind::S_YYEOF;
-    else if (t <= code_max)
-      return static_cast <symbol_kind_type> (translate_table[t]);
-    else
-      return symbol_kind::S_YYUNDEF;
-  }
+#line 17 "parser.y"
+} // ParserNS
+#line 1725 "parser.cpp"
 
-#line 21 "parser.y"
-} // Parser
-#line 1645 "parser.cpp"
-
-#line 381 "parser.y"
+#line 366 "parser.y"
 
 
-void yyerror(Parser::context_type& context, const char *s) {
-    std::cerr << "Error at " << context.location.begin.filename << ":"
-              << context.location.begin.line << ":"
-              << context.location.begin.column << " - " << s << std::endl;
+void yyerror(const std::string& message) {
+    std::cerr << "Error: " << message << std::endl;
     exit(1);
 }

@@ -5,39 +5,30 @@
 #include "ast.h"
 #include "symbol_table.h"
 
-using namespace std;
-
-// Declare yylex with the correct signature expected by Bison
-int yylex(Parser::semantic_type *yylval, Parser::location_type &loc);
-
-// Update yyerror to match Bison's expectations
-void yyerror(Parser::context_type& context, const char *s);
+// Forward declarations
+int yylex(ParserNS::ParserClass::semantic_type *yylval);
+void yyerror(const std::string& message);
 
 extern ASTNode *ast_root;
 %}
 
-%skeleton "lalr1.cc"
+%language "C++"
 
-%define api.namespace {Parser}
-%define api.parser.class {Parser}
+%define api.namespace {ParserNS}
+%define api.parser.class {ParserClass}
+%define api.value.type variant
+%define api.token.constructor
+%defines
 
 %code requires {
     #include "ast.h"
+    #include <vector>
+    #include <string>
 }
 
-%union {
-    int int_val;
-    bool bool_val;
-    char *id;
-    ASTNode *node;
-    std::vector<ASTNode*> *node_list;           // For lists of statements
-    std::vector<VariableNode*> *var_list;       // For lists of variables
-    std::vector<ASTNode*> *expr_list;           // For lists of expressions
-}
-
-%token <int_val> UNSIGNED_INT
-%token <bool_val> BOOL_CONST
-%token <id> IDENTIFIER
+%token <int> UNSIGNED_INT
+%token <bool> BOOL_CONST
+%token <std::string> IDENTIFIER
 
 %token ASSIGN SEMICOLON COMMA LPAREN RPAREN LBRACKET RBRACKET LBRACE RBRACE
 %token PLUS MINUS MULTIPLY DIVIDE MODULO
@@ -59,18 +50,11 @@ extern ASTNode *ast_root;
 %nonassoc RPAREN
 %nonassoc LPAREN
 
-%type <node> program statement variable_declaration
-             constant_declaration array_declaration array_extension
-             assignment increment
-             decrement loop conditional function_declaration
-             function_call robot_operation group_of_statements
-             expression array_access movement_operator sensor_operator
-
-%type <node_list> statements
-
-%type <var_list> variables return_variables parameters
-
-%type <expr_list> expressions
+%type <ASTNode*> program statement variable_declaration
+%type <ASTNode*> constant_declaration array_declaration array_extension assignment
+%type <ASTNode*> function_call increment decrement loop conditional function_declaration
+%type <ASTNode*> robot_operation group_of_statements expression array_access movement_operator sensor_operator
+%type <std::vector<ASTNode*>*> expressions variables return_variables parameters statements
 
 %%
 
@@ -78,6 +62,7 @@ program:
     /* empty */
         {
             $$ = new BlockNode(new std::vector<ASTNode*>());
+            ast_root = $$;
         }
     | program statement
         {
@@ -105,7 +90,7 @@ statement:
 assignment:
     IDENTIFIER ASSIGN expression SEMICOLON
         {
-            $$ = new AssignmentNode(std::string($1), $3);
+            $$ = new AssignmentNode($1, $3);
         }
     | array_access ASSIGN expression SEMICOLON
         {
@@ -116,73 +101,73 @@ assignment:
 function_call:
     IDENTIFIER LPAREN expressions RPAREN SEMICOLON
         {
-            $$ = new FunctionCallNode(std::string($1), $3);
+            $$ = new FunctionCallNode($1, $3);
         }
     ;
 
 variable_declaration:
     UINT IDENTIFIER ASSIGN expression SEMICOLON
         {
-            $$ = new VarDeclarationNode(std::string($2), VarType::UINT, $4);
+            $$ = new VarDeclarationNode($2, VarType::UINT, $4);
         }
     | BOOLEAN IDENTIFIER ASSIGN expression SEMICOLON
         {
-            $$ = new VarDeclarationNode(std::string($2), VarType::BOOLEAN, $4);
+            $$ = new VarDeclarationNode($2, VarType::BOOLEAN, $4);
         }
     ;
 
 constant_declaration:
     CUINT IDENTIFIER ASSIGN expression SEMICOLON
         {
-            $$ = new ConstDeclarationNode(std::string($2), VarType::UINT, $4);
+            $$ = new ConstDeclarationNode($2, VarType::UINT, $4);
         }
     | CBOOLEAN IDENTIFIER ASSIGN expression SEMICOLON
         {
-            $$ = new ConstDeclarationNode(std::string($2), VarType::BOOLEAN, $4);
+            $$ = new ConstDeclarationNode($2, VarType::BOOLEAN, $4);
         }
     ;
 
 array_declaration:
     ARRAY1DBOOL IDENTIFIER ASSIGN LBRACKET expressions RBRACKET SEMICOLON
         {
-            $$ = new ArrayDeclarationNode(std::string($2), VarType::BOOLEAN, 1, $5);
+            $$ = new ArrayDeclarationNode($2, VarType::BOOLEAN, 1, $5);
         }
     | ARRAY2DBOOL IDENTIFIER ASSIGN LBRACKET expressions RBRACKET SEMICOLON
         {
-            $$ = new ArrayDeclarationNode(std::string($2), VarType::BOOLEAN, 2, $5);
+            $$ = new ArrayDeclarationNode($2, VarType::BOOLEAN, 2, $5);
         }
     | ARRAY1DUINT IDENTIFIER ASSIGN LBRACKET expressions RBRACKET SEMICOLON
         {
-            $$ = new ArrayDeclarationNode(std::string($2), VarType::UINT, 1, $5);
+            $$ = new ArrayDeclarationNode($2, VarType::UINT, 1, $5);
         }
     | ARRAY2DUINT IDENTIFIER ASSIGN LBRACKET expressions RBRACKET SEMICOLON
         {
-            $$ = new ArrayDeclarationNode(std::string($2), VarType::UINT, 2, $5);
+            $$ = new ArrayDeclarationNode($2, VarType::UINT, 2, $5);
         }
     ;
 
 array_extension:
     EXTEND1 IDENTIFIER expression SEMICOLON
         {
-            $$ = new ArrayExtensionNode(std::string($2), 1, $3);
+            $$ = new ArrayExtensionNode($2, 1, $3, nullptr);
         }
     | EXTEND2 IDENTIFIER expression COMMA expression SEMICOLON
         {
-            $$ = new ArrayExtensionNode(std::string($2), 2, $3, $5);
+            $$ = new ArrayExtensionNode($2, 2, $3, $5);
         }
     ;
 
 increment:
     INC IDENTIFIER SEMICOLON
         {
-            $$ = new IncDecNode(std::string($2), 1);
+            $$ = new IncDecNode($2, 1);
         }
     ;
 
 decrement:
     DEC IDENTIFIER SEMICOLON
         {
-            $$ = new IncDecNode(std::string($2), -1);
+            $$ = new IncDecNode($2, -1);
         }
     ;
 
@@ -207,7 +192,7 @@ conditional:
 function_declaration:
     return_variables FUNCTION IDENTIFIER LPAREN parameters RPAREN group_of_statements
         {
-            $$ = new FunctionDeclarationNode(std::string($3), $1, $5, $7);
+            $$ = new FunctionDeclarationNode($3, $1, $5, $7);
         }
     ;
 
@@ -222,7 +207,7 @@ group_of_statements:
     LBRACE statements RBRACE
         {
             $$ = new BlockNode($2);
-            delete $2;  // Clean up the vector as it's now encapsulated within BlockNode
+            delete $2; // Clean up the vector as it's now encapsulated within BlockNode
         }
     ;
 
@@ -245,7 +230,7 @@ expression:
         }
     | NOT expression
         {
-            $$ = new LogicalOpNode('N', $2);
+            $$ = new LogicalOpNode('N', $2, nullptr);
         }
     | expression GT expression
         {
@@ -289,7 +274,7 @@ expression:
         }
     | IDENTIFIER
         {
-            $$ = new VariableNode(std::string($1));
+            $$ = new VariableNode($1);
         }
     | array_access
         {
@@ -300,7 +285,7 @@ expression:
 array_access:
     IDENTIFIER LPAREN expressions RPAREN
         {
-            $$ = new ArrayAccessNode(std::string($1), $3);
+            $$ = new ArrayAccessNode($1, $3);
         }
     ;
 
@@ -330,18 +315,18 @@ parameters:
     variables
         { $$ = $1; }
     | /* empty */
-        { $$ = new std::vector<VariableNode*>(); }
+        { $$ = new std::vector<ASTNode*>(); }
     ;
 
 variables:
     IDENTIFIER
         {
-            $$ = new std::vector<VariableNode*>();
-            $$->push_back(new VariableNode(std::string($1)));
+            $$ = new std::vector<ASTNode*>();
+            $$->push_back(new VariableNode($1));
         }
     | variables COMMA IDENTIFIER
         {
-            $1->push_back(new VariableNode(std::string($3)));
+            $1->push_back(new VariableNode($3));
             $$ = $1;
         }
     ;
@@ -380,9 +365,7 @@ sensor_operator:
 
 %%
 
-void yyerror(Parser::context_type& context, const char *s) {
-    std::cerr << "Error at " << context.location.begin.filename << ":"
-              << context.location.begin.line << ":"
-              << context.location.begin.column << " - " << s << std::endl;
+void yyerror(const std::string& message) {
+    std::cerr << "Error: " << message << std::endl;
     exit(1);
 }

@@ -5,9 +5,12 @@
 #include <string>
 #include "types.h"
 
+class SymbolTable;
 
-// Enum for Node Types
-enum class NodeType {
+// Base class for all AST Nodes
+class ASTNode {
+public:
+    enum class NodeType {
     Program,
     VarDeclaration,
     ConstDeclaration,
@@ -35,14 +38,9 @@ enum class NodeType {
     Movement,
     Sensor
 };
-
-// Base class for all AST Nodes
-class ASTNode {
-public:
-    NodeType type;
     ASTNode *sibling;
 
-    ASTNode(NodeType type) : type(type), sibling(nullptr) {}
+    ASTNode(NodeType type) : type(type) {}
     virtual ~ASTNode() {}
     
     void addSibling(ASTNode *node) {
@@ -50,7 +48,12 @@ public:
         else sibling->addSibling(node);
     }
 
+    virtual int evaluateInt() { return 0; } // Default implementation
+    virtual bool evaluateBool() { return false; } // Default implementation
     virtual void interpret() = 0;  // Pure virtual function to interpret the AST
+    NodeType getType() const { return type; }
+private:
+    NodeType type;
 };
 
 // Variable Declaration Node
@@ -179,15 +182,17 @@ public:
 // Function Declaration Node
 class FunctionDeclarationNode : public ASTNode {
 public:
-    std::string id;
-    std::vector<ASTNode*> *returnVars;
-    std::vector<ASTNode*> *parameters;
-    ASTNode *body;
-
-    FunctionDeclarationNode(const std::string &id, std::vector<ASTNode*> *returnVars, std::vector<ASTNode*> *params, ASTNode *body)
-        : ASTNode(NodeType::FunctionDeclaration), id(id), returnVars(returnVars), parameters(params), body(body) {}
+    FunctionDeclarationNode(const std::string &id, std::vector<ASTNode*> *returnVars,
+                            std::vector<ASTNode*> *params, ASTNode *body)
+        : ASTNode(NodeType::FunctionDeclaration), id(id), returnVars(returnVars), params(params), body(body) {}
 
     void interpret() override;
+
+private:
+    std::string id;
+    std::vector<ASTNode*> *returnVars;
+    std::vector<ASTNode*> *params;
+    ASTNode *body;
 };
 
 // Function Call Node
@@ -252,6 +257,18 @@ public:
         : ASTNode(NodeType::ArithmeticOp), operation(op), left(left), right(right) {}
 
     void interpret() override;
+    int evaluateInt() override {
+        int leftVal = left->evaluateInt();
+        int rightVal = right->evaluateInt();
+        switch (operation) {
+            case '+': return leftVal + rightVal;
+            case '-': return leftVal - rightVal;
+            case '*': return leftVal * rightVal;
+            case '/': return leftVal / rightVal; // Add division by zero check
+            case '%': return leftVal % rightVal; // Add modulo by zero check
+        }
+        return 0; // Default case
+    }
 };
 
 // Logical Operation Node
@@ -294,6 +311,7 @@ public:
         : ASTNode(NodeType::IntLiteral), value(val) {}
 
     void interpret() override;
+    int evaluateInt() override { return value; }
 };
 
 // Bool Literal Node
@@ -305,17 +323,20 @@ public:
         : ASTNode(NodeType::BoolLiteral), value(val) {}
 
     void interpret() override;
+    bool evaluateBool() override { return value; }
 };
 
-// Variable Node
 class VariableNode : public ASTNode {
 public:
-    std::string id;
-
-    VariableNode(const std::string &id)
-        : ASTNode(NodeType::Variable), id(id) {}
-
+    VariableNode(const std::string &name)
+        : ASTNode(NodeType::Variable), name(name) {}
+    
     void interpret() override;
+    
+    const std::string& getName() const { return name; }
+
+private:
+    std::string name;
 };
 
 // Array Access Node
@@ -330,27 +351,16 @@ public:
     void interpret() override;
 };
 
-// Block Node
 class BlockNode : public ASTNode {
 public:
+    BlockNode(std::vector<ASTNode*> *stmts)
+        : ASTNode(NodeType::StatementList), statements(*stmts) {}
+    void interpret() override;
+    void addStatement(ASTNode* stmt);
+
+private:
     std::vector<ASTNode*> statements;
-
-    BlockNode(std::vector<ASTNode*> *stmts) : ASTNode(NodeType::StatementList), statements(*stmts) {}
-
-    void addStatement(ASTNode* stmt) {
-        if (stmt) {
-            statements.push_back(stmt);
-        }
-    }
-
-    void interpret() override {
-        for (auto stmt : statements) {
-            stmt->interpret();
-        }
-    }
 };
-
-
 
 class MatrixRowNode : public ASTNode {
 public:
