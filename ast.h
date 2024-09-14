@@ -3,7 +3,8 @@
 
 #include <vector>
 #include <string>
-#include "symbol_table.h"
+#include "types.h"
+
 
 // Enum for Node Types
 enum class NodeType {
@@ -329,15 +330,12 @@ public:
     void interpret() override;
 };
 
+// Block Node
 class BlockNode : public ASTNode {
 public:
     std::vector<ASTNode*> statements;
 
-    BlockNode(ASTNode* stmt) : ASTNode(NodeType::StatementList) {
-        if (stmt) {
-            statements.push_back(stmt);
-        }
-    }
+    BlockNode(std::vector<ASTNode*> *stmts) : ASTNode(NodeType::StatementList), statements(*stmts) {}
 
     void addStatement(ASTNode* stmt) {
         if (stmt) {
@@ -351,6 +349,8 @@ public:
         }
     }
 };
+
+
 
 class MatrixRowNode : public ASTNode {
 public:

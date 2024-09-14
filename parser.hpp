@@ -45,7 +45,7 @@
 #ifndef YY_YY_PARSER_HPP_INCLUDED
 # define YY_YY_PARSER_HPP_INCLUDED
 // "%code requires" blocks.
-#line 21 "parser.y"
+#line 24 "parser.y"
 
     #include "ast.h"
 
@@ -183,7 +183,7 @@
 # define YYDEBUG 0
 #endif
 
-#line 18 "parser.y"
+#line 21 "parser.y"
 namespace Parser {
 #line 189 "parser.hpp"
 
@@ -203,15 +203,17 @@ namespace Parser {
     /// Symbol semantic values.
     union value_type
     {
-#line 25 "parser.y"
+#line 28 "parser.y"
 
     int int_val;
     bool bool_val;
     char *id;
     ASTNode *node;
-    std::vector<ASTNode*> *node_list;
+    std::vector<ASTNode*> *node_list;           // For lists of statements
+    std::vector<VariableNode*> *var_list;       // For lists of variables
+    std::vector<ASTNode*> *expr_list;           // For lists of expressions
 
-#line 215 "parser.hpp"
+#line 217 "parser.hpp"
 
     };
 #endif
@@ -372,35 +374,28 @@ namespace Parser {
         S_YYACCEPT = 56,                         // $accept
         S_program = 57,                          // program
         S_statement = 58,                        // statement
-        S_variable_declaration = 59,             // variable_declaration
-        S_constant_declaration = 60,             // constant_declaration
-        S_array_declaration = 61,                // array_declaration
-        S_array_extension = 62,                  // array_extension
-        S_assignment = 63,                       // assignment
-        S_increment = 64,                        // increment
-        S_decrement = 65,                        // decrement
-        S_loop = 66,                             // loop
-        S_conditional = 67,                      // conditional
-        S_function_declaration = 68,             // function_declaration
-        S_function_call = 69,                    // function_call
+        S_assignment = 59,                       // assignment
+        S_function_call = 60,                    // function_call
+        S_variable_declaration = 61,             // variable_declaration
+        S_constant_declaration = 62,             // constant_declaration
+        S_array_declaration = 63,                // array_declaration
+        S_array_extension = 64,                  // array_extension
+        S_increment = 65,                        // increment
+        S_decrement = 66,                        // decrement
+        S_loop = 67,                             // loop
+        S_conditional = 68,                      // conditional
+        S_function_declaration = 69,             // function_declaration
         S_robot_operation = 70,                  // robot_operation
         S_group_of_statements = 71,              // group_of_statements
         S_statements = 72,                       // statements
         S_expression = 73,                       // expression
-        S_arithmetic_expression = 74,            // arithmetic_expression
-        S_logical_expression = 75,               // logical_expression
-        S_comparison = 76,                       // comparison
-        S_array_access = 77,                     // array_access
-        S_arithmetic_expression_list = 78,       // arithmetic_expression_list
-        S_logical_expression_list = 79,          // logical_expression_list
-        S_logical_expression_matrix = 80,        // logical_expression_matrix
-        S_arithmetic_expression_matrix = 81,     // arithmetic_expression_matrix
-        S_return_variables = 82,                 // return_variables
-        S_parameters = 83,                       // parameters
-        S_variables = 84,                        // variables
-        S_expressions = 85,                      // expressions
-        S_movement_operator = 86,                // movement_operator
-        S_sensor_operator = 87                   // sensor_operator
+        S_array_access = 74,                     // array_access
+        S_expressions = 75,                      // expressions
+        S_return_variables = 76,                 // return_variables
+        S_parameters = 77,                       // parameters
+        S_variables = 78,                        // variables
+        S_movement_operator = 79,                // movement_operator
+        S_sensor_operator = 80                   // sensor_operator
       };
     };
 
@@ -607,7 +602,7 @@ namespace Parser {
     /// \param yyvalue   the value to check
     static bool yy_table_value_is_error_ (int yyvalue) YY_NOEXCEPT;
 
-    static const short yypact_ninf_;
+    static const signed char yypact_ninf_;
     static const signed char yytable_ninf_;
 
     /// Convert a scanner token kind \a t to a symbol kind.
@@ -640,7 +635,7 @@ namespace Parser {
     // YYTABLE[YYPACT[STATE-NUM]] -- What to do in state STATE-NUM.  If
     // positive, shift that token.  If negative, reduce the rule whose
     // number is the opposite.  If YYTABLE_NINF, syntax error.
-    static const short yytable_[];
+    static const unsigned char yytable_[];
 
     static const short yycheck_[];
 
@@ -884,8 +879,8 @@ namespace Parser {
     /// Constants.
     enum
     {
-      yylast_ = 306,     ///< Last index in yytable_.
-      yynnts_ = 32,  ///< Number of nonterminal symbols.
+      yylast_ = 337,     ///< Last index in yytable_.
+      yynnts_ = 25,  ///< Number of nonterminal symbols.
       yyfinal_ = 2 ///< Termination state number.
     };
 
@@ -894,9 +889,9 @@ namespace Parser {
   };
 
 
-#line 18 "parser.y"
+#line 21 "parser.y"
 } // Parser
-#line 900 "parser.hpp"
+#line 895 "parser.hpp"
 
 
 

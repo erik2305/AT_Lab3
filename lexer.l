@@ -1,6 +1,14 @@
 %{
-#include "parser.hpp"  // Include Bison-generated header
+#include "parser.hpp"
+#include "ast.h"
 #include <cstring>
+#include <cstdlib>
+
+// Use the correct namespace
+using namespace Parser;
+
+// Define the yylex function signature as expected by Bison
+#define YY_DECL int yylex(semantic_type * yylval, location_type &loc)
 %}
 
 %option noyywrap
@@ -8,17 +16,17 @@
 %%
 
 [0-9]+ {
-    yylval.int_val = atoi(yytext);
+    yylval->int_val = atoi(yytext);
     return UNSIGNED_INT;
 }
 
 "true" {
-    yylval.bool_val = true;
+    yylval->bool_val = true;
     return BOOL_CONST;
 }
 
 "false" {
-    yylval.bool_val = false;
+    yylval->bool_val = false;
     return BOOL_CONST;
 }
 
@@ -42,9 +50,14 @@
 "undo"        { return UNDO; }
 
 [a-zA-Z_][a-zA-Z0-9_]* {
-    yylval.id = strdup(yytext);
+    yylval->id = strdup(yytext);
     return IDENTIFIER;
 }
+
+"1DARRAYOFBOOL"     { return ARRAY1DBOOL; }
+"2DARRAYOFBOOL"     { return ARRAY2DBOOL; }
+"1DARRAYOFUINT"     { return ARRAY1DUINT; }
+"2DARRAYOFUINT"     { return ARRAY2DUINT; }
 
 "=" { return ASSIGN; }
 ";" { return SEMICOLON; }
@@ -67,7 +80,7 @@
 ">" { return GT; }
 "<" { return LT; }
 
-[ \t\n\r]+ ;  // Ignore whitespace
+[ \t\r\n]+ ;  // Ignore whitespace
 
 . {
     std::cerr << "Unknown character: " << yytext << std::endl;
@@ -76,6 +89,6 @@
 
 %%
 
-int yylex(Parser::semantic_type *yylval) {
-    return yylex();
+int yylex(Parser::semantic_type * yylval, Parser::location_type &loc) {
+    return yylex(yylval, loc);
 }

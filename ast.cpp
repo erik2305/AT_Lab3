@@ -275,3 +275,9 @@ void interpret(ASTNode *node) {
     node->interpret();
     interpret(node->sibling);  // Interpret sibling nodes in sequence
 }
+
+void BlockNode::interpret() {
+    for (auto stmt : statements) {
+        stmt->interpret();
+    }
+}

@@ -4,15 +4,10 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include "types.h"
 #include "ast.h"
 
 class ASTNode;
-
-enum class VarType {
-    UINT,
-    BOOLEAN,
-    // Add array types if necessary
-};
 
 class Variable {
 public:
